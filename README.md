@@ -14,7 +14,7 @@ This repository is organized into one main directory. Below is a high-level over
 
 ### Data Completeness Note
 
-The raw reports in the `ARGUE` folder were used to create the final datasets for our study. To ensure a sufficiently large and diverse dataset for analysis, we combined data from two separate generation runs for each model. This combined and processed data, which served as the input for our scoring methods, is located in the `FACTUM-main` directory. To know more about the citation labeling process, I recommend you to go [here](https://gitlab.hltcoe.jhu.edu/scale25/citation_labeling)
+The raw reports in the `ARGUE` folder were used to create the final datasets for our study. To ensure a sufficiently large and diverse dataset for analysis, we combined data from two separate generation runs for each model. This combined and processed data, which served as the input for our scoring methods, is located in the `FACTUM-main` directory. 
 
 ## Getting Started
 

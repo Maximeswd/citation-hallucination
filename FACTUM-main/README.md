@@ -42,8 +42,7 @@ uv pip install importlib-metadata
 ```
 
 ## Installing the Modified Transformers Library
-This is the most critical step. Our method requires a modified version of the Hugging Face ``transformers`` library to extract internal model states. This modified library is included as a directory within this ``FACTUM-main`` folder. You must install it from here.
-Important: Ensure you are in the ``FACTUM-main`` directory before running the following command. The ``-e`` flag installs the package in "editable" mode, linking directly to the source code in this folder.
+This is the most critical step. Our method requires a modified version of the Hugging Face ``transformers`` library to extract internal model states. This modified library is included as a directory within this ``FACTUM-main`` folder. Important: Ensure you are in the ``FACTUM-main`` directory before running the following command. The ``-e`` flag installs the package in "editable" mode, linking directly to the source code in this folder.
 
 ```bash
 # From within the FACTUM-main directory, install our custom transformers package
