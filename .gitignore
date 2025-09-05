@@ -1,0 +1,23 @@
+# Ignore original data folder
+ARGUE/
+
+# Ignore jobs folder
+jobs/
+
+# Ignore jobs inside FACTUM and scale folders
+FACTUM-main/FACTUM/jobs/
+FACTUM-main/scale/jobs/
+
+# Ignore all plots 
+FACTUM-main/scale/results/llama3.1-8b_neuclir24/plots/
+FACTUM-main/scale/results/llama3.2-3b_neuclir24/plots/
+
+# Ignore all analysis10 results except for the results from the paper
+FACTUM-main/scale/results/llama3.1-8b_neuclir24/analysis10/
+FACTUM-main/scale/results/llama3.2-3b_neuclir24/analysis10/
+
+#
+!FACTUM-main/scale/results/llama3.1-8b_neuclir24/analysis10/26_significance_testing/significance_test_results.csv
+!FACTUM-main/scale/results/llama3.2-3b_neuclir24/analysis10/26_significance_testing/significance_test_results.csv
+
+!FACTUM-main/scale/results/llama3.1-8b_neuclir24/analysis10/25_paper_confident_prediction_planes_30percent/confident_plane_ecs_prompt_final_vs_parameter_knowledge_Logistic_Regression.png
