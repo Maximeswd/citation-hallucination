@@ -70,7 +70,6 @@ def config():
             "23_qualitative_analysis",
             "24_best_feature_planes",
             "25_confident_prediction_planes",
-            "26_significance_testing",  # <-- ADDED
             "generic_showdown",
             "all",
         ],
@@ -1376,165 +1375,6 @@ def run_specific_combinations_plot(
         else:
             print(f"  -> No results were generated for {model_name}, skipping plot.")
 
-
-def run_significance_testing(
-    args, models, base_rank_phase="12_feature_rank_comprehensive"
-):
-    """
-    Performs bootstrap significance testing to compare model combinations.
-    """
-    phase_name = "26_significance_testing"
-    output_dir = os.path.join(args.base_dir, phase_name)
-    os.makedirs(output_dir, exist_ok=True)
-    print("\n" + "=" * 80 + f"\n--- Starting Phase 26: Significance Testing ---\n" + "=" * 80)
-
-    X_aggregate, y = get_engineered_data(args, feature_mode="comprehensive")
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_aggregate, y, test_size=0.2, random_state=SEED, stratify=y
-    )
-    y_test_np = y_test.to_numpy() # For bootstrap function
-
-    all_significance_results = []
-
-    for model_name, model in models.items():
-        print(f"\n--- Processing Classifier: {model_name} ---")
-        safe_name = model_name.replace(" ", "_")
-        source_summary_path = os.path.join(
-            args.base_dir, base_rank_phase, f"summary_single_features_{safe_name}.csv"
-        )
-        try:
-            summary_df = pd.read_csv(source_summary_path)
-        except FileNotFoundError:
-            print(f"ERROR: Prerequisite summary for {model_name} not found. Skipping.")
-            continue
-
-        def get_best_feature(keyword):
-            df = summary_df[summary_df["Feature"].str.contains(keyword, regex=False)]
-            return df.iloc[0]["Feature"] if not df.empty else None
-
-        best_features_map = {
-            "cas": get_best_feature("ecs_final"),
-            "vffn": get_best_feature("v_ffn_norm"),
-            "bos": get_best_feature("bos_attention"),
-            "pos": get_best_feature("pos_score"),
-            "ecs": get_best_feature("ecs_prompt_final"),
-            "pks": get_best_feature("parameter_knowledge"),
-        }
-
-        feature_sets = {
-            "Baseline": [best_features_map["ecs"], best_features_map["pks"]],
-            "Ours 1": [best_features_map["cas"], best_features_map["vffn"]],
-            "Ours 2": [
-                best_features_map["bos"],
-                best_features_map["pos"],
-                best_features_map["cas"],
-                best_features_map["vffn"],
-            ],
-        }
-
-        # Train all models and store their results (including predictions)
-        trained_models_results = {}
-        for combo_name, feature_list in feature_sets.items():
-            feature_list = [f for f in feature_list if f]
-            if not feature_list:
-                print(f"Skipping '{combo_name}' for {model_name}: missing features.")
-                continue
-
-            print(f"  -> Training {combo_name} combination...")
-            results = train_and_evaluate(
-                {model_name: clone(model)},
-                X_train[feature_list], y_train,
-                X_test[feature_list], y_test,
-            )
-            trained_models_results[combo_name] = results[model_name]
-
-        if "Baseline" not in trained_models_results:
-            print(f"Cannot perform significance tests for {model_name} without baseline results.")
-            continue
-        
-        baseline_probas = trained_models_results["Baseline"]["y_probas"]
-        baseline_preds = (baseline_probas > 0.5).astype(int)
-
-        # Perform comparisons
-        for combo_to_compare in ["Ours 1", "Ours 2"]:
-            if combo_to_compare not in trained_models_results:
-                continue
-
-            print(f"  -> Comparing '{combo_to_compare}' vs. 'Baseline' for {model_name}")
-            
-            comparison_results = trained_models_results[combo_to_compare]
-            comparison_probas = comparison_results["y_probas"]
-            comparison_preds = (comparison_probas > 0.5).astype(int)
-
-            # AUC
-            ci_auc = get_bootstrap_ci(y_test_np, baseline_probas, comparison_probas, roc_auc_score, metric_type='proba')
-            
-            # F1 Score
-            ci_f1 = get_bootstrap_ci(y_test_np, baseline_preds, comparison_preds, f1_score, metric_type='pred')
-            
-            # Recall
-            ci_recall = get_bootstrap_ci(y_test_np, baseline_preds, comparison_preds, recall_score, metric_type='pred')
-            
-            # Pearson CC
-            def pcc_func(y_true, y_pred): return pearsonr(y_true, y_pred)[0]
-            ci_pcc = get_bootstrap_ci(y_test_np, baseline_probas, comparison_probas, pcc_func, metric_type='proba')
-            
-            all_significance_results.append({
-                "Classifier": model_name,
-                "Comparison": f"{combo_to_compare} vs. Baseline",
-                "Metric": "AUC",
-                "Baseline_Score": trained_models_results["Baseline"]["auc"],
-                "Comparison_Score": comparison_results["auc"],
-                "Difference": comparison_results["auc"] - trained_models_results["Baseline"]["auc"],
-                "95%_CI_Lower": ci_auc[0],
-                "95%_CI_Upper": ci_auc[1],
-                "Is_Significant": "Yes" if ci_auc[0] > 0 or ci_auc[1] < 0 else "No",
-            })
-            all_significance_results.append({
-                "Classifier": model_name,
-                "Comparison": f"{combo_to_compare} vs. Baseline",
-                "Metric": "F1",
-                "Baseline_Score": trained_models_results["Baseline"]["f1"],
-                "Comparison_Score": comparison_results["f1"],
-                "Difference": comparison_results["f1"] - trained_models_results["Baseline"]["f1"],
-                "95%_CI_Lower": ci_f1[0],
-                "95%_CI_Upper": ci_f1[1],
-                "Is_Significant": "Yes" if ci_f1[0] > 0 or ci_f1[1] < 0 else "No",
-            })
-            all_significance_results.append({
-                "Classifier": model_name,
-                "Comparison": f"{combo_to_compare} vs. Baseline",
-                "Metric": "Recall",
-                "Baseline_Score": trained_models_results["Baseline"]["recall"],
-                "Comparison_Score": comparison_results["recall"],
-                "Difference": comparison_results["recall"] - trained_models_results["Baseline"]["recall"],
-                "95%_CI_Lower": ci_recall[0],
-                "95%_CI_Upper": ci_recall[1],
-                "Is_Significant": "Yes" if ci_recall[0] > 0 or ci_recall[1] < 0 else "No",
-            })
-            all_significance_results.append({
-                "Classifier": model_name,
-                "Comparison": f"{combo_to_compare} vs. Baseline",
-                "Metric": "PCC",
-                "Baseline_Score": trained_models_results["Baseline"]["pcc"],
-                "Comparison_Score": comparison_results["pcc"],
-                "Difference": comparison_results["pcc"] - trained_models_results["Baseline"]["pcc"],
-                "95%_CI_Lower": ci_pcc[0],
-                "95%_CI_Upper": ci_pcc[1],
-                "Is_Significant": "Yes" if ci_pcc[0] > 0 or ci_pcc[1] < 0 else "No",
-            })
-
-    # Save final results to a CSV file
-    if all_significance_results:
-        results_df = pd.DataFrame(all_significance_results)
-        save_path = os.path.join(output_dir, "significance_test_results_8020.csv")
-        results_df.to_csv(save_path, index=False, float_format="%.4f")
-        print(f"\nSignificance test results saved to: {save_path}")
-        print("\n" + results_df.to_string())
-    else:
-        print("\nNo significance tests were run. Check for errors.")
-
-
 def run_ultimate_showdown(args, models):
     """Finds the best 5-feature combo with anchor feature"""
     phase_name = f"19_ultimate_showdown_{args.selector}"
@@ -2063,52 +1903,17 @@ def main():
             os.path.join(a.base_dir, "12_feature_rank_comprehensive"),
             "12_feature_rank_comprehensive",
         ),
-        # "ecs_pks_showdown_comprehensive": lambda a, m: run_feature_showdown(
-        #     a,
-        #     m,
-        #     "ecs_pks_showdown_comprehensive",
-        #     {
-        #         "ecs_prompt_final": ["ecs_prompt_final"],
-        #         "parameter_knowledge": ["parameter_knowledge"],
-        #     },
-        #     "comprehensive",
-        #     "12_feature_rank_comprehensive",
-        # ),
-        # "casf_vffn_pos_bos_showdown_comprehensive": lambda a, m: run_feature_showdown(
-        #     a,
-        #     m,
-        #     "casf_vffn_pos_bos_showdown_comprehensive",
-        #     {
-        #         "CAS": ["ecs_final"],
-        #         "V_ffn": ["v_ffn_norm"],
-        #         "POS": ["pos_score"],
-        #         "<bos>": ["bos_attention"],
-        #     },
-        #     "comprehensive",
-        #     "12_feature_rank_comprehensive",
-        # ),
-        # "19_ultimate_showdown": run_ultimate_showdown,
-        # "20_final_layer_analysis": run_phase_20_final_layer_analysis,
-        # "21_last_two_layers_analysis": run_phase_21_last_two_layers_analysis,
-        # "generic_showdown": run_generic_ultimate_showdown,
-        "poster_plots_min": lambda a, m: run_specific_combinations_plot(a, m, "poster_plots_min"),
+        "paper_results": lambda a, m: run_specific_combinations_plot(a, m, "paper_results"),
         "23_qualitative_analysis": lambda a, m: run_qualitative_case_study_analysis(
             a, m, top_percent=30
         ),
         "25_confident_prediction_planes": lambda a, m: plot_confident_prediction_planes(
             a, m, BEST_FEATURE_PLANE_PAIRS, top_percent=30
         ),
-        # "26_significance_testing": run_significance_testing, 
     }
 
     if args.phase == "all":
         all_phases_to_run = phase_runners.copy()
-        # all_phases_to_run["generic_showdown"] = (
-        #     lambda a, m: run_generic_ultimate_showdown(a, m)
-        # )
-        # all_phases_to_run["24_best_feature_planes"] = (
-        #     lambda a, m: plot_best_feature_plane(a, m, BEST_FEATURE_PLANE_PAIRS)
-        # )
         for name, phase_func in all_phases_to_run.items():
             print(f"\n{'='*30} RUNNING PHASE: {name.upper()} {'='*30}")
             phase_func(args, models)
