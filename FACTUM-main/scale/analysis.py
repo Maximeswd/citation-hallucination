@@ -26,6 +26,7 @@ from sklearn.metrics import (
     f1_score,
     roc_auc_score,
     recall_score,
+    precision_score, 
     roc_curve,
 )
 from sklearn.model_selection import train_test_split, StratifiedKFold
@@ -475,6 +476,7 @@ def train_and_evaluate(models, X_train, y_train, X_test, y_test):
             "pcc": pearsonr(y_test, pred_probas)[0],
             "accuracy": accuracy_score(y_test, preds),
             "recall": recall_score(y_test, preds),
+            "precision": precision_score(y_test, preds),
             "f1": f1_score(y_test, preds),
             "y_probas": pred_probas,
         }

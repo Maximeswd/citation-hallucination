@@ -1,4 +1,4 @@
-Combination,Features,auc,pcc,accuracy,recall,f1
-Ours 2,"['bos_attention_proportion_per_head_mean_layer_fft_mag_1', 'pos_score_per_layer_layer_delta_std', 'ecs_final_layer_per_head_mean_layer_std', 'v_ffn_norm_per_layer_layer_slope_full']",0.9259259259259259,0.7176521966570749,0.8055555555555556,0.7222222222222222,0.7878787878787877
-Ours 1,"['ecs_final_layer_per_head_mean_layer_std', 'v_ffn_norm_per_layer_layer_slope_full']",0.7654320987654322,0.4360857072692064,0.7222222222222222,0.7222222222222222,0.7222222222222222
-Baseline,"['ecs_prompt_final_layer_per_head_mean_layer_std', 'parameter_knowledge_difference_layer_delta_mean']",0.654320987654321,0.21593875787454972,0.5555555555555556,0.4444444444444444,0.5
+Combination,Features,auc,pcc,accuracy,recall,precision,f1
+Ours 2,"['bos_attention_proportion_per_head_mean_layer_fft_mag_1', 'pos_score_per_layer_layer_delta_std', 'ecs_final_layer_per_head_mean_layer_std', 'v_ffn_norm_per_layer_layer_slope_full']",0.9259259259259259,0.7176521966570749,0.8055555555555556,0.7222222222222222,0.8666666666666667,0.7878787878787877
+Ours 1,"['ecs_final_layer_per_head_mean_layer_std', 'v_ffn_norm_per_layer_layer_slope_full']",0.7654320987654322,0.4360857072692064,0.7222222222222222,0.7222222222222222,0.7222222222222222,0.7222222222222222
+Baseline,"['ecs_prompt_final_layer_per_head_mean_layer_std', 'parameter_knowledge_difference_layer_delta_mean']",0.654320987654321,0.21593875787454972,0.5555555555555556,0.4444444444444444,0.5555555555555556,0.5
