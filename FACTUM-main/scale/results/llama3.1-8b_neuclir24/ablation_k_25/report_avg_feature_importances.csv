@@ -1,0 +1,25 @@
+model,combo,feature,importance
+EBM,Baseline,ecs_prompt_final_layer_per_head_fft_mag_4,0.1317
+EBM,Baseline,parameter_knowledge_difference_fft_mag_1,0.2823
+EBM,Ours 1,cas_alt_vs_final_layer_per_head_std,0.2194
+EBM,Ours 1,v_ffn_norm_per_layer_mean,0.5406
+EBM,Ours 2,bos_attention_proportion_per_head_fft_mag_1,0.7008
+EBM,Ours 2,cas_alt_vs_final_layer_per_head_std,0.1688
+EBM,Ours 2,pos_cos_similarity_per_layer_fft_mag_2,0.1450
+EBM,Ours 2,v_ffn_norm_per_layer_fft_mag_2,0.1677
+LightGBM,Baseline,ecs_prompt_final_layer_per_head_fft_mag_4,272.1500
+LightGBM,Baseline,parameter_knowledge_difference_slope,257.2600
+LightGBM,Ours 1,cas_alt_vs_final_layer_per_head_std,267.1200
+LightGBM,Ours 1,v_ffn_norm_per_layer_fft_mag_2,261.4500
+LightGBM,Ours 2,bos_attention_proportion_per_head_fft_mag_1,135.7100
+LightGBM,Ours 2,cas_alt_vs_final_layer_per_head_fft_mag_1,133.5500
+LightGBM,Ours 2,pos_cos_similarity_per_layer_fft_mag_2,131.0300
+LightGBM,Ours 2,v_ffn_norm_per_layer_max,127.5700
+Logistic Regression,Baseline,ecs_prompt_final_layer_per_head_fft_mag_4,0.1557
+Logistic Regression,Baseline,parameter_knowledge_difference_fft_mag_3,0.2062
+Logistic Regression,Ours 1,cas_alt_vs_final_layer_per_head_fft_mag_5,0.1951
+Logistic Regression,Ours 1,v_ffn_norm_per_layer_sum,0.8858
+Logistic Regression,Ours 2,bos_attention_proportion_per_head_fft_mag_1,0.9981
+Logistic Regression,Ours 2,cas_alt_vs_final_layer_per_head_fft_mag_3,0.2188
+Logistic Regression,Ours 2,pos_cos_similarity_per_layer_mean,0.2222
+Logistic Regression,Ours 2,v_ffn_norm_per_layer_sum,0.3203

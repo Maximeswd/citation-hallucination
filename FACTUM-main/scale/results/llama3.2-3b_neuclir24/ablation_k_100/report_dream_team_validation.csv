@@ -1,0 +1,25 @@
+Classifier,Model_Combination,Mechanistic_Concept,Selected_Feature,Correlation_r,P_Value,Is_Significant_p<0.05
+Logistic Regression,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_3,-0.15612,0.00059,Yes
+Logistic Regression,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,-0.10031,0.02783,Yes
+Logistic Regression,Ours 1,PFS,v_ffn_norm_per_layer_mean,-0.19345,0.00002,Yes
+Logistic Regression,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_5,-0.04031,0.37775,No
+Logistic Regression,Ours 2,PFS,v_ffn_norm_per_layer_mean,-0.19345,0.00002,Yes
+Logistic Regression,Ours 2,PAS,pos_cos_similarity_per_layer_sum,0.11122,0.01467,Yes
+Logistic Regression,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,-0.24759,0.00000,Yes
+Logistic Regression,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_3,-0.06596,0.14859,No
+LightGBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_slope,0.06424,0.15950,No
+LightGBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,-0.10031,0.02783,Yes
+LightGBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,-0.04010,0.38025,No
+LightGBM,Ours 1,PFS,v_ffn_norm_per_layer_fft_mag_2,-0.15264,0.00078,Yes
+LightGBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_2,-0.09759,0.03236,Yes
+LightGBM,Ours 2,PFS,v_ffn_norm_per_layer_max,-0.07258,0.11191,No
+LightGBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_1,0.10878,0.01700,Yes
+LightGBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,-0.24759,0.00000,Yes
+EBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_1,-0.12305,0.00689,Yes
+EBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,-0.10031,0.02783,Yes
+EBM,Ours 1,PFS,v_ffn_norm_per_layer_sum,-0.19345,0.00002,Yes
+EBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_1,0.10878,0.01700,Yes
+EBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_2,-0.09759,0.03236,Yes
+EBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_std,-0.04010,0.38025,No
+EBM,Ours 2,PFS,v_ffn_norm_per_layer_fft_mag_2,-0.15264,0.00078,Yes
+EBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,-0.24759,0.00000,Yes

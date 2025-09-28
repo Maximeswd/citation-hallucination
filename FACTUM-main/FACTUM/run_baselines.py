@@ -5,485 +5,294 @@ import spacy
 import torch
 import torch.nn.functional as F
 import argparse
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import gc
 import os
 import re
 import random
 from collections import defaultdict
-
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
+from sklearn.utils import resample
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.metrics import (
     roc_auc_score,
     accuracy_score,
     recall_score,
     f1_score,
     roc_curve,
+    precision_score,
 )
 from scipy.stats import pearsonr
-
-# Suppress verbose warnings
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-try:
-    from selfcheckgpt.modeling_selfcheck import SelfCheckNLI, SelfCheckBERTScore
-except ImportError:
-    print(
-        "Error: 'selfcheckgpt' library not found. Please install with 'pip install selfcheckgpt'"
-    )
-    exit()
-
-# CONFIGURATION
-SEED = 10
+# ==============================================================================
+# --- CONFIGURATION & HELPERS ---
+# ==============================================================================
+SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
-
-# DATA PREP
 def robust_read_jsonl(file_path: str):
-    records = []
     with open(file_path, "r", encoding="utf-8") as f:
         for line in f:
-            if not line.strip():
-                continue
-            try:
-                records.append(json.loads(line))
-            except json.JSONDecodeError:
-                print(f"Warning: Skipping malformed JSON line: {line.strip()}")
-    return pd.DataFrame(records)
+            if line.strip():
+                try:
+                    yield json.loads(line)
+                except json.JSONDecodeError:
+                    print(f"Warning: Skipping malformed JSON line: {line.strip()}")
 
+def is_numeric(s: str) -> bool:
+    if not isinstance(s, str) or not s: return False
+    s = s.strip()
+    if s in ['.', '-', '+']: return False
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
-def parse_prompt_for_sources(prompt_text: str) -> dict:
-    source_map = {}
-    if pd.isna(prompt_text) or "---" not in prompt_text:
-        return {}
-    parts = prompt_text.split("---")
-    if len(parts) < 2:
-        return {}
-    context_section = parts[1]
-    pattern = re.compile(
-        r"Source: (\d+)\nTitle: .*?\nContent: (.*?)(?=\n\s*Source: \d+|\Z)", re.DOTALL
-    )
-    for match in pattern.finditer(context_section):
-        source_num = int(match.group(1))
-        content = match.group(2).strip()
-        source_map[source_num] = content
-    return source_map
+def get_labeled_token_map_numeric_only(labels, response_text, tokenizer, prefix_len):
+    token_map = {}
+    if not labels: return token_map
+    response_tokens = tokenizer(response_text, return_offsets_mapping=True, add_special_tokens=False)
+    offsets = response_tokens["offset_mapping"]
 
+    for label in labels:
+        label_text = str(label.get("text", ""))
+        if not (isinstance(label.get("start"), int) and is_numeric(label_text)): continue
+        span_start_char, span_end_char = label["start"], label["end"]
+        start_token_idx, end_token_idx = -1, -1
+        for i, (tok_start, tok_end) in enumerate(offsets):
+            if start_token_idx == -1 and tok_start <= span_start_char < tok_end: start_token_idx = i
+            if start_token_idx != -1 and tok_start < span_end_char <= tok_end:
+                end_token_idx = i
+                break
+        if start_token_idx != -1 and end_token_idx == -1: end_token_idx = start_token_idx
 
-def prepare_evaluation_data(df: pd.DataFrame, nlp, tokenizer) -> pd.DataFrame:
-    print("Preparing evaluation data by pre-calculating token spans...")
-    all_eval_points = []
-    SAFE_MAX_LENGTH = 4096
-    for _, row in tqdm(df.iterrows(), total=len(df), desc="Processing labeled spans"):
-        if (
-            pd.isna(row.get("prompt"))
-            or pd.isna(row.get("response"))
-            or not isinstance(row.get("labels"), list)
-        ):
-            continue
-        source_map = parse_prompt_for_sources(row["prompt"])
-        response_text = row["response"]
-        prompt_text = row["prompt"]
-        full_text = prompt_text + response_text
-        response_char_len = len(response_text)
-        encoding = tokenizer(
-            full_text,
-            return_tensors="pt",
-            truncation=True,
-            max_length=SAFE_MAX_LENGTH,
-            return_offsets_mapping=True,
-        )
-        offset_mapping = encoding["offset_mapping"][0]
-        prompt_char_len = len(prompt_text)
-        for label in row["labels"]:
-            if not (
-                isinstance(label.get("start"), int)
-                and isinstance(label.get("end"), int)
-                and 0 <= label["start"] < label["end"] <= response_char_len
-            ):
-                continue
-            label_start_char = prompt_char_len + label["start"]
-            label_end_char = prompt_char_len + label["end"]
-            start_token, end_token = -1, -1
-            for idx, (start, end) in enumerate(offset_mapping):
-                if start_token == -1 and start <= label_start_char < end:
-                    start_token = idx
-                if end_token == -1 and start < label_end_char <= end:
-                    end_token = idx
-                    break
-            if start_token == -1 or end_token == -1:
-                continue
-            token_span = (start_token, end_token + 1)
-            doc = nlp(response_text)
-            containing_sentence = ""
-            for sent in doc.sents:
-                if sent.start_char <= label["start"] and sent.end_char >= label["end"]:
-                    containing_sentence = sent.text
-                    break
-            if not containing_sentence:
-                continue
-            is_citation_task = str(label.get("text", "")).isdigit()
-            if is_citation_task:
-                sentence_to_check = re.sub(
-                    r"\[Source: \d+\]\.?", "", containing_sentence
-                ).strip()
-                citation_num = int(label["text"])
-                context = source_map.get(citation_num, " ".join(source_map.values()))
-            else:
-                sentence_to_check = containing_sentence
-                context = row.get("source_info", "")
-            all_eval_points.append(
-                {
-                    "source_id": row["source_id"],
-                    "prompt": prompt_text,
-                    "full_response": response_text,
-                    "sentence_to_check": sentence_to_check,
-                    "context": context,
-                    "token_span": token_span,
-                    "label_text": label["text"],
-                    "label": 0 if label["label_type"] == "good" else 1,
-                    "is_citation_task": is_citation_task,
-                }
-            )
-    return pd.DataFrame(all_eval_points)
+        if start_token_idx != -1 and end_token_idx != -1:
+            label_code = 0 if label["label_type"] == "good" else 1
+            for i in range(start_token_idx, end_token_idx + 1):
+                token_id = response_tokens['input_ids'][i]
+                token_text = tokenizer.decode(token_id)
+                if is_numeric(token_text):
+                    token_map[prefix_len + i] = {"label": label_code, "char_start": label['start']}
+    return token_map
 
+# ==============================================================================
+# --- EVALUATION FRAMEWORK (CORRECTED) ---
+# ==============================================================================
 
-def create_reproducible_balanced_sample(df: pd.DataFrame) -> pd.DataFrame:
-    if df.empty:
-        return df
-    sampled_dfs = []
-    for _, group in df.groupby("source_id"):
-        factual = group[group["label"] == 0]
-        hallucinated = group[group["label"] == 1]
-        sample_size = min(len(factual), len(hallucinated))
-        if sample_size > 0:
-            sampled_dfs.extend(
-                [
-                    factual.sample(n=sample_size, random_state=SEED),
-                    hallucinated.sample(n=sample_size, random_state=SEED),
-                ]
-            )
-    if not sampled_dfs:
-        return pd.DataFrame()
-    return (
-        pd.concat(sampled_dfs).sample(frac=1, random_state=SEED).reset_index(drop=True)
-    )
-
-
-# BASELINE RUNNER
-class BaselineRunner:
-    def __init__(self, model_path: str):
-        print("\nStep 3: Initializing All Baseline Models...")
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-        config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_path, config=config, torch_dtype=torch.float16, device_map="auto"
-        ).eval()
-        self.temp_cache = {}
-        self.selfcheck_nli = SelfCheckNLI(device=self.device)
-        self.selfcheck_bertscore = SelfCheckBERTScore(rescale_with_baseline=True)
-
-    def _get_and_cache_internal_states(self, prompt, full_response):
-        with torch.no_grad():
-            inputs = self.tokenizer(
-                prompt + full_response,
-                return_tensors="pt",
-                truncation=True,
-                max_length=4096,
-            )
-            outputs = self.model(
-                input_ids=inputs.input_ids.to(self.device), output_hidden_states=True
-            )
-            self.temp_cache = {
-                "input_ids": inputs.input_ids.cpu(),
-                "logits": outputs.logits.cpu(),
-                "hidden_states": [hs.cpu() for hs in outputs.hidden_states],
-            }
-
-    def clear_cache(self):
-        self.temp_cache = {}
-        gc.collect()
-        torch.cuda.empty_cache()
-
-    def _get_tensors_for_span(self, span_tuple, tensor_name):
-        full_tensor = self.temp_cache[tensor_name]
-        start, end = span_tuple
-        span = slice(start, end)
-        if tensor_name == "hidden_states":
-            return [hs[:, span, :] for hs in full_tensor]
-        elif tensor_name == "logits":
-            return full_tensor[:, span.start - 1 : span.stop - 1, :]
-        elif tensor_name == "input_ids":
-            return full_tensor[:, span.start : span.stop]
-
-    def calculate_perplexity(self, row):
-        logits = self._get_tensors_for_span(row["token_span"], "logits")
-        target_ids = self._get_tensors_for_span(row["token_span"], "input_ids")
-        if (
-            logits is None
-            or target_ids is None
-            or logits.shape[1] == 0
-            or target_ids.shape[1] == 0
-            or logits.shape[1] != target_ids.shape[1]
-        ):
-            return np.nan
-        loss = F.cross_entropy(
-            logits.to(self.device).view(-1, self.model.config.vocab_size),
-            target_ids.to(self.device).view(-1),
-        )
-        return torch.exp(loss).item()
-
-    def calculate_energy_score(self, row):
-        logits = self._get_tensors_for_span(row["token_span"], "logits")
-        if logits is None or logits.shape[1] == 0:
-            return np.nan
-        return -torch.logsumexp(logits.to(self.device).float(), dim=-1).mean().item()
-
-    def calculate_ptrue_score(self, row):
-        span = row["token_span"]
-        hidden_states = self._get_tensors_for_span(span, "hidden_states")
-        target_ids = self._get_tensors_for_span(span, "input_ids")
-        if hidden_states is None or target_ids is None or target_ids.shape[1] == 0:
-            return np.nan
-        final_hs, early_hs = hidden_states[-1], hidden_states[2]
-        final_logits, early_logits = (
-            self.model.lm_head(final_hs.to(self.device)),
-            self.model.lm_head(early_hs.to(self.device)),
-        )
-        final_log_probs = (
-            F.log_softmax(final_logits, dim=-1)
-            .gather(2, target_ids.to(self.device).unsqueeze(-1))
-            .squeeze(-1)
-        )
-        early_log_probs = (
-            F.log_softmax(early_logits, dim=-1)
-            .gather(2, target_ids.to(self.device).unsqueeze(-1))
-            .squeeze(-1)
-        )
-        return -(final_log_probs - early_log_probs).mean().item()
-
-    def calculate_ln_entropy(self, row):
-        logits = self._get_tensors_for_span(row["token_span"], "logits")
-        if logits is None or logits.shape[1] == 0:
-            return np.nan
-        probs = torch.softmax(logits.to(self.device).float(), dim=-1)
-        return -torch.sum(probs * torch.log(probs + 1e-9), dim=-1).mean().item()
-
-    def run_selfcheck_nli(self, row):
-        sentence, context = (
-            str(row.get(k, "")) for k in ["sentence_to_check", "context"]
-        )
-        return (
-            self.selfcheck_nli.predict(
-                sentences=[sentence], sampled_passages=[context]
-            )[0]
-            if sentence and context
-            else 0.0
-        )
-
-    def run_selfcheck_bertscore(self, row):
-        sentence, context = (
-            str(row.get(k, "")) for k in ["sentence_to_check", "context"]
-        )
-        return (
-            self.selfcheck_bertscore.predict(
-                sentences=[sentence], sampled_passages=[context]
-            )[0]
-            if sentence and context
-            else 0.5
-        )
-
-
-# EVALUATION
 def find_optimal_threshold(y_true, y_scores):
     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
-    if len(thresholds) == 0:
-        return 0.5
-    optimal_threshold = thresholds[np.argmax(tpr - fpr)]
-    return optimal_threshold if np.isfinite(optimal_threshold) else 0.5
+    if len(thresholds) == 0: return 0.5
+    optimal_idx = np.argmax(tpr - fpr)
+    return thresholds[optimal_idx]
 
+def evaluate_fold(train_df, test_df, baseline_name):
+    """Evaluates a single fold of cross-validation with corrected score logic."""
+    y_test = test_df["label"].values
+    scores_test = test_df[baseline_name].values
+    
+    valid_test = ~np.isnan(scores_test)
+    if not np.any(valid_test) or len(np.unique(y_test[valid_test])) < 2:
+        return {"AUC": np.nan, "PCC": np.nan, "Accuracy": np.nan, "Precision": np.nan, "Recall": np.nan, "F1": np.nan}
+    
+    y_test_clean = y_test[valid_test]
+    scores_test_clean = scores_test[valid_test]
+    
+    # --- Determine predictions and scores for metrics ---
+    if "P(True)" in baseline_name:
+        # P(True): High score = good (0), Low score = bad (1)
+        threshold = 0.5
+        y_pred = (scores_test_clean < threshold).astype(int)
+        roc_scores = 1 - scores_test_clean  # Invert so higher score means "bad" for AUC
+        pcc_scores = scores_test_clean
+    else:
+        # Perplexity, etc: High score = bad (1), Low score = good (0)
+        y_train, scores_train = train_df["label"].values, train_df[baseline_name].values
+        valid_train = ~np.isnan(scores_train)
+        if not np.any(valid_train) or len(np.unique(y_train[valid_train])) < 2:
+             return {"AUC": np.nan, "PCC": np.nan, "Accuracy": np.nan, "Precision": np.nan, "Recall": np.nan, "F1": np.nan}
+        
+        threshold = find_optimal_threshold(y_train[valid_train], scores_train[valid_train])
+        y_pred = (scores_test_clean > threshold).astype(int)
+        roc_scores = scores_test_clean  # Higher score already means "bad" for AUC
+        pcc_scores = scores_test_clean
 
-def evaluate_predictions(y_true, y_scores, metric_name=""):
-    y_true_clean, y_scores_clean = [
-        np.array(v)
-        for v in zip(
-            *[
-                (yt, ys)
-                for yt, ys in zip(y_true, y_scores)
-                if ys is not None and not np.isnan(ys)
-            ]
-        )
-    ]
-    if len(set(y_true_clean)) < 2:
-        return {
-            "AUC": np.nan,
-            "PCC": np.nan,
-            "Accuracy": np.nan,
-            "Recall": np.nan,
-            "F1": np.nan,
-        }
-    if metric_name in ["SelfCheck-NLI", "SelfCheck-BERTScore"]:
-        y_scores_clean = -y_scores_clean
-    threshold = find_optimal_threshold(y_true_clean, y_scores_clean)
-    y_pred = (y_scores_clean > threshold).astype(int)
     return {
-        "AUC": roc_auc_score(y_true_clean, y_scores_clean),
-        "PCC": pearsonr(y_true_clean, y_scores_clean)[0],
-        "Accuracy": accuracy_score(y_true_clean, y_pred),
-        "Recall": recall_score(y_true_clean, y_pred),
-        "F1": f1_score(y_true_clean, y_pred),
+        "AUC": roc_auc_score(y_test_clean, roc_scores),
+        "PCC": pearsonr(y_test_clean, pcc_scores)[0] * (-1 if "P(True)" in baseline_name else 1),
+        "Accuracy": accuracy_score(y_test_clean, y_pred),
+        "Precision": precision_score(y_test_clean, y_pred, zero_division=0),
+        "Recall": recall_score(y_test_clean, y_pred, zero_division=0),
+        "F1": f1_score(y_test_clean, y_pred, zero_division=0),
     }
 
 
-def run_scoring(args):
-    """Runs the full scoring process on a single data file and saves the raw scores."""
-    nlp = spacy.load("en_core_web_sm")
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path)
-    responses_df = robust_read_jsonl(args.response_file)
-    source_info_df = robust_read_jsonl(args.source_info_file)
-    merged_df = pd.merge(responses_df, source_info_df, on="source_id", how="left")
-    eval_df = prepare_evaluation_data(merged_df, nlp, tokenizer)
-    if args.dataset_type == "ragtruth":
-        eval_df = create_reproducible_balanced_sample(eval_df)
-    if eval_df.empty:
-        print("CRITICAL: No data to evaluate after preparation. Exiting.")
-        pd.DataFrame().to_csv(args.output_file, index=False)
-        return
-    runner = BaselineRunner(model_path=args.model_path)
-    baselines = {
-        "SelfCheck-NLI": runner.run_selfcheck_nli,
-        "SelfCheck-BERTScore": runner.run_selfcheck_bertscore,
-        "Perplexity": runner.calculate_perplexity,
-        "LN-Entropy": runner.calculate_ln_entropy,
-        "Energy Score": runner.calculate_energy_score,
-        "P(True) Score": runner.calculate_ptrue_score,
-    }
-    text_baselines = {b for b in baselines if "SelfCheck" in b}
-    for name, method in baselines.items():
-        print(f"\n--- Running Baseline: {name} ---")
-        if name in text_baselines:
-            eval_df[name] = eval_df.progress_apply(method, axis=1)
-        else:
-            eval_df[name] = np.nan
-            for source_id, group in tqdm(
-                eval_df.groupby("source_id"), desc=f"Processing documents for {name}"
-            ):
-                runner._get_and_cache_internal_states(
-                    group.iloc[0]["prompt"], group.iloc[0]["full_response"]
-                )
-                eval_df.loc[group.index, name] = group.apply(method, axis=1)
-                runner.clear_cache()
-    print(f"\n--- Raw scores and labels saved to {args.output_file} ---")
-    eval_df.to_csv(args.output_file, index=False)
-
-
-def run_summarization(args):
-    """Combines raw score files from an input directory and computes the final, rounded metrics."""
-    score_files = [
-        os.path.join(args.input_dir, f)
-        for f in os.listdir(args.input_dir)
-        if f.endswith(".csv")
-    ]
-    if not score_files:
-        print(f"CRITICAL: No CSV files found in {args.input_dir}. Exiting.")
-        return
-    combined_df = pd.concat((pd.read_csv(f) for f in score_files), ignore_index=True)
-    print(
-        f"--- Combined {len(score_files)} score files into a single dataset of {len(combined_df)} rows. ---"
-    )
-    baselines = [
-        "SelfCheck-NLI",
-        "SelfCheck-BERTScore",
-        "Perplexity",
-        "LN-Entropy",
-        "Energy Score",
-        "P(True) Score",
-    ]
-    all_results = []
-    y_true = combined_df["label"].tolist()
-    for name in baselines:
-        if name not in combined_df.columns:
-            continue
-        metrics = evaluate_predictions(
-            y_true, combined_df[name].tolist(), metric_name=name
-        )
-        metrics["Baseline"] = name
-        all_results.append(metrics)
-    results_df = pd.DataFrame(all_results)
-    numeric_cols = ["AUC", "PCC", "Accuracy", "Recall", "F1"]
-    results_df[numeric_cols] = results_df[numeric_cols].round(4)
-    print(f"\n--- Final Results Summary saved to {args.output_file} ---")
-    print(
-        results_df[["Baseline", "AUC", "PCC", "Accuracy", "Recall", "F1"]].to_string(
-            index=False
-        )
-    )
-    results_df.to_csv(args.output_file, index=False)
-
+# ==============================================================================
+# --- MAIN ORCHESTRATOR ---
+# ==============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Run or summarize hallucination detection baselines.",
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser.add_argument(
-        "--mode",
-        type=str,
-        required=True,
-        choices=["score", "summarize"],
-        help="Choose 'score' to run on a data split, or 'summarize' to combine raw score files.",
-    )
-    parser.add_argument(
-        "--output_file",
-        type=str,
-        required=True,
-        help="Path for the output file.\n- For 'score' mode, this is the raw scores CSV for a split.\n- For 'summarize' mode, this is the final summary CSV.",
-    )
-    score_args = parser.add_argument_group('Arguments for "score" mode')
-    score_args.add_argument(
-        "--response_file", type=str, help="Path to the response data split."
-    )
-    score_args.add_argument(
-        "--source_info_file", type=str, help="Path to the source info file."
-    )
-    score_args.add_argument(
-        "--model_path",
-        type=str,
-        default="meta-llama/Llama-2-7b-chat-hf",
-        help="Path to the Hugging Face LLM.",
-    )
-    score_args.add_argument(
-        "--dataset_type",
-        type=str,
-        choices=["neuclir", "ragtruth"],
-        help="Type of dataset (for sampling).",
-    )
-    summarize_args = parser.add_argument_group('Arguments for "summarize" mode')
-    summarize_args.add_argument(
-        "--input_dir", type=str, help="Directory containing the raw score CSV files."
-    )
+    parser = argparse.ArgumentParser(description="Run evaluation for internal confidence baselines on numeric tokens.")
+    parser.add_argument("--response_file", type=str, required=True)
+    parser.add_argument("--source_info_file", type=str, required=True)
+    parser.add_argument("--output_file", type=str, required=True)
+    parser.add_argument("--model_path", type=str, default="meta-llama/Llama-2-7b-chat-hf")
+    parser.add_argument("--n_splits", type=int, default=5, help="Number of folds for CV. Use 3 for ~70/30, 10 for 90/10.")
     args = parser.parse_args()
 
-    if args.mode == "score":
-        if not all([args.response_file, args.source_info_file, args.dataset_type]):
-            parser.error(
-                "--response_file, --source_info_file, and --dataset_type are required for 'score' mode."
-            )
-        run_scoring(args)
-    elif args.mode == "summarize":
-        if not args.input_dir:
-            parser.error("--input_dir is required for 'summarize' mode.")
-        run_summarization(args)
+    print("--- Loading Model, Tokenizer, and NLP ---")
+    tokenizer = AutoTokenizer.from_pretrained(args.model_path)
+    model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.float16, device_map="auto").eval()
+    device = model.device
+    nlp = spacy.load("en_core_web_sm")
 
+    print("--- Calculating All Internal Baseline Scores on Numeric Tokens Only ---")
+    responses_data = list(robust_read_jsonl(args.response_file))
+    source_info_dict = {item["source_id"]: item for item in robust_read_jsonl(args.source_info_file)}
+    all_token_data = []
+
+    true_token_ids = [tokenizer.encode(tok, add_special_tokens=False)[0] for tok in ["True", " true", " True"]]
+    true_token_ids = list(set(true_token_ids))
+
+    for item in tqdm(responses_data, desc="Processing Documents"):
+        source_id = item.get("source_id")
+        if not source_id or not item.get("labels"): continue
+        source_item = source_info_dict.get(source_id)
+        if not source_item: continue
+
+        prompt_text, response_text = source_item["prompt"], item["response"]
+        prompt_ids = tokenizer(prompt_text, add_special_tokens=True, return_tensors="pt").input_ids
+        prefix_len = prompt_ids.shape[1]
+        
+        labeled_token_map = get_labeled_token_map_numeric_only(item["labels"], response_text, tokenizer, prefix_len)
+        if not labeled_token_map: continue
+
+        response_ids = tokenizer(response_text, add_special_tokens=False, return_tensors="pt").input_ids
+        full_ids = torch.cat([prompt_ids, response_ids], dim=1)
+        
+        past_key_values = None
+        all_logits_chunks = []
+
+        with torch.no_grad():
+            for chunk_start in range(0, full_ids.shape[1], 512):
+                chunk_end = min(chunk_start + 512, full_ids.shape[1])
+                input_chunk = full_ids[:, chunk_start:chunk_end].to(device)
+                
+                outputs = model(input_ids=input_chunk, use_cache=True, past_key_values=past_key_values)
+                
+                all_logits_chunks.append(outputs.logits.cpu())
+                past_key_values = outputs.past_key_values
+        
+        logits = torch.cat(all_logits_chunks, dim=1)
+        
+        doc = nlp(response_text)
+        sents = list(doc.sents)
+        
+        for token_idx, label_info in labeled_token_map.items():
+            if token_idx >= full_ids.shape[1] or token_idx < prefix_len: continue
+            
+            token_logits = logits[:, token_idx - 1, :]
+            target_id = full_ids[:, token_idx]
+            
+            loss = F.cross_entropy(token_logits.view(-1, model.config.vocab_size), target_id.view(-1))
+            perplexity = torch.exp(loss).item()
+            probs = torch.softmax(token_logits.float(), dim=-1)
+            ln_entropy = -torch.sum(probs * torch.log(probs + 1e-9), dim=-1).mean().item()
+            energy_score = -torch.logsumexp(token_logits.float(), dim=-1).mean().item()
+
+            sentence_to_check = ""
+            for i, sent in enumerate(sents):
+                if sent.start_char <= label_info['char_start'] < sent.end_char:
+                    cleaned_sent = re.sub(r"\[Source: \d+\]\.?", "", sent.text).strip()
+                    if not cleaned_sent and i > 0:
+                        sentence_to_check = sents[i-1].text.strip()
+                    else:
+                        sentence_to_check = cleaned_sent
+                    break
+            
+            ptrue_query_score = np.nan
+            if sentence_to_check:
+                query_prompt = f"Is the statement \"{sentence_to_check}\" true or false? Answer:"
+                query_ids = tokenizer(query_prompt, return_tensors="pt").input_ids.to(device)
+                with torch.no_grad():
+                    query_logits = model(query_ids).logits.cpu()
+                
+                next_token_logits = query_logits[0, -1, :]
+                next_token_probs = F.softmax(next_token_logits, dim=-1)
+                ptrue_query_score = next_token_probs[true_token_ids].sum().item()
+            
+            all_token_data.append({
+                "source_id": source_id, "label": label_info['label'],
+                "Perplexity": perplexity, "LN-Entropy": ln_entropy,
+                "Energy Score": energy_score, "P(True) Query": ptrue_query_score
+            })
+        
+        del past_key_values, all_logits_chunks, logits, full_ids
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    eval_df = pd.DataFrame(all_token_data)
+    if eval_df.empty:
+        print("\nCRITICAL: No scorable numeric data points were found. Exiting.")
+        return
+        
+    print(f"\nTotal numeric tokens scored: {len(eval_df)}")
+    print(f"Class distribution of scored tokens:\n{eval_df['label'].value_counts()}")
+    
+    print(f"\n--- Running 10-Repeat, {args.n_splits}-Fold Group-Stratified Cross-Validation ---")
+    baselines = ["Perplexity", "LN-Entropy", "Energy Score", "P(True) Query"]
+    all_results = defaultdict(lambda: defaultdict(list))
+    
+    for i in tqdm(range(10), desc=f"CV Repeats ({args.n_splits}-Fold)"):
+        sgkf = StratifiedGroupKFold(n_splits=args.n_splits, shuffle=True, random_state=SEED + i)
+        
+        for fold_idx, (train_idx, test_idx) in enumerate(sgkf.split(eval_df, eval_df["label"], eval_df["source_id"])):
+            train_df_imbalanced, test_df = eval_df.iloc[train_idx], eval_df.iloc[test_idx]
+            
+            minority = train_df_imbalanced[train_df_imbalanced["label"] == 1]
+            majority = train_df_imbalanced[train_df_imbalanced["label"] == 0]
+            if len(minority) == 0 or len(majority) == 0: continue
+            
+            majority_downsampled = resample(majority, replace=False, n_samples=len(minority), random_state=SEED)
+            train_df_balanced = pd.concat([minority, majority_downsampled])
+            
+            if i == 0 and fold_idx == 0:
+                 print(f"\n--- Example Fold Data Split (approx. {100*(args.n_splits-1)/args.n_splits:.0f}/{100/args.n_splits:.0f}) ---")
+                 print(f"Total Train Samples (Balanced for thresholding): {len(train_df_balanced)}")
+                 print(f"  - Class distribution: {train_df_balanced['label'].value_counts().to_dict()}")
+                 print(f"Total Test Samples: {len(test_df)}")
+                 print(f"  - Class distribution: {test_df['label'].value_counts().to_dict()}")
+                 print("---------------------------------\n")
+
+            for baseline_name in baselines:
+                fold_metrics = evaluate_fold(train_df_balanced, test_df, baseline_name)
+                for metric, value in fold_metrics.items(): all_results[baseline_name][metric].append(value)
+    
+    print("\n--- Final Cross-Validated Results ---")
+    final_summary = []
+    for baseline_name in baselines:
+        if baseline_name in all_results:
+            avg_metrics = {"Baseline": baseline_name}
+            for metric, values in all_results[baseline_name].items():
+                avg_metrics[metric] = np.nanmean(values)
+            final_summary.append(avg_metrics)
+    
+    if not final_summary:
+        print("No results were generated. Please check your data and code.")
+        return
+
+    results_df = pd.DataFrame(final_summary).round(4)
+    print(results_df.to_string(index=False))
+    results_df.to_csv(args.output_file, index=False)
+    print(f"\nResults saved to {args.output_file}")
 
 if __name__ == "__main__":
     main()

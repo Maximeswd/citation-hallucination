@@ -1,0 +1,46 @@
+Metric,Comparison,Mean_Baseline_Score,Mean_Comparison_Score,P_Value_raw,P_Value_BH_Corrected,Is_Significant_BH,Classifier
+AUC,Ours 1 vs. Baseline,0.6278,0.6457,0.0677,0.0781,No,Logistic Regression
+PCC,Ours 1 vs. Baseline,0.1772,0.1979,0.0964,0.1033,No,Logistic Regression
+Precision,Ours 1 vs. Baseline,0.2419,0.2607,0.0071,0.0097,Yes,Logistic Regression
+Recall,Ours 1 vs. Baseline,0.5989,0.6178,0.1547,0.1547,No,Logistic Regression
+F1,Ours 1 vs. Baseline,0.3428,0.3648,0.0150,0.0188,Yes,Logistic Regression
+AUC,Ours 2 vs. Baseline,0.6278,0.7199,0.0000,0.0000,Yes,Logistic Regression
+PCC,Ours 2 vs. Baseline,0.1772,0.2999,0.0000,0.0000,Yes,Logistic Regression
+Precision,Ours 2 vs. Baseline,0.2419,0.3124,0.0000,0.0000,Yes,Logistic Regression
+Recall,Ours 2 vs. Baseline,0.5989,0.6933,0.0000,0.0000,Yes,Logistic Regression
+F1,Ours 2 vs. Baseline,0.3428,0.4284,0.0000,0.0000,Yes,Logistic Regression
+AUC,Ours 2 vs. Ours 1,0.6457,0.7199,0.0000,0.0000,Yes,Logistic Regression
+PCC,Ours 2 vs. Ours 1,0.1979,0.2999,0.0000,0.0000,Yes,Logistic Regression
+Precision,Ours 2 vs. Ours 1,0.2607,0.3124,0.0000,0.0000,Yes,Logistic Regression
+Recall,Ours 2 vs. Ours 1,0.6178,0.6933,0.0000,0.0000,Yes,Logistic Regression
+F1,Ours 2 vs. Ours 1,0.3648,0.4284,0.0000,0.0000,Yes,Logistic Regression
+AUC,Ours 1 vs. Baseline,0.5416,0.5596,0.0893,0.1217,No,LightGBM
+PCC,Ours 1 vs. Baseline,0.0598,0.0805,0.1166,0.1457,No,LightGBM
+Precision,Ours 1 vs. Baseline,0.2127,0.2134,0.4582,0.4582,No,LightGBM
+Recall,Ours 1 vs. Baseline,0.5344,0.5533,0.1711,0.1974,No,LightGBM
+F1,Ours 1 vs. Baseline,0.3021,0.3063,0.3368,0.3609,No,LightGBM
+AUC,Ours 2 vs. Baseline,0.5416,0.7119,0.0000,0.0000,Yes,LightGBM
+PCC,Ours 2 vs. Baseline,0.0598,0.2890,0.0000,0.0000,Yes,LightGBM
+Precision,Ours 2 vs. Baseline,0.2127,0.3052,0.0000,0.0000,Yes,LightGBM
+Recall,Ours 2 vs. Baseline,0.5344,0.6789,0.0000,0.0000,Yes,LightGBM
+F1,Ours 2 vs. Baseline,0.3021,0.4184,0.0000,0.0000,Yes,LightGBM
+AUC,Ours 2 vs. Ours 1,0.5596,0.7119,0.0000,0.0000,Yes,LightGBM
+PCC,Ours 2 vs. Ours 1,0.0805,0.2890,0.0000,0.0000,Yes,LightGBM
+Precision,Ours 2 vs. Ours 1,0.2134,0.3052,0.0000,0.0000,Yes,LightGBM
+Recall,Ours 2 vs. Ours 1,0.5533,0.6789,0.0000,0.0000,Yes,LightGBM
+F1,Ours 2 vs. Ours 1,0.3063,0.4184,0.0000,0.0000,Yes,LightGBM
+AUC,Ours 1 vs. Baseline,0.5891,0.6405,0.0002,0.0003,Yes,EBM
+PCC,Ours 1 vs. Baseline,0.1200,0.1788,0.0010,0.0014,Yes,EBM
+Precision,Ours 1 vs. Baseline,0.2292,0.2575,0.0002,0.0003,Yes,EBM
+Recall,Ours 1 vs. Baseline,0.6511,0.6322,0.8180,0.8180,No,EBM
+F1,Ours 1 vs. Baseline,0.3374,0.3632,0.0072,0.0090,Yes,EBM
+AUC,Ours 2 vs. Baseline,0.5891,0.6997,0.0000,0.0000,Yes,EBM
+PCC,Ours 2 vs. Baseline,0.1200,0.2816,0.0000,0.0000,Yes,EBM
+Precision,Ours 2 vs. Baseline,0.2292,0.3182,0.0000,0.0000,Yes,EBM
+Recall,Ours 2 vs. Baseline,0.6511,0.6467,0.5811,0.6226,No,EBM
+F1,Ours 2 vs. Baseline,0.3374,0.4224,0.0000,0.0000,Yes,EBM
+AUC,Ours 2 vs. Ours 1,0.6405,0.6997,0.0000,0.0000,Yes,EBM
+PCC,Ours 2 vs. Ours 1,0.1788,0.2816,0.0000,0.0000,Yes,EBM
+Precision,Ours 2 vs. Ours 1,0.2575,0.3182,0.0000,0.0000,Yes,EBM
+Recall,Ours 2 vs. Ours 1,0.6322,0.6467,0.2446,0.2823,No,EBM
+F1,Ours 2 vs. Ours 1,0.3632,0.4224,0.0000,0.0000,Yes,EBM
