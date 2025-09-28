@@ -1,4 +1,0 @@
-Combination,Features,auc,pcc,accuracy,recall,precision,f1
-Ours 2,"['bos_attention_proportion_per_head_mean_layer_fft_mag_1', 'pos_score_per_layer_layer_delta_max', 'ecs_final_layer_per_head_std_layer_fft_mag_3', 'v_ffn_norm_per_layer_layer_mean']",0.8487654320987654,0.5891284115940251,0.8055555555555556,0.7222222222222222,0.8666666666666667,0.7878787878787877
-Ours 1,"['ecs_final_layer_per_head_std_layer_fft_mag_3', 'v_ffn_norm_per_layer_layer_mean']",0.75,0.4393465848228226,0.6666666666666666,0.6666666666666666,0.6666666666666666,0.6666666666666666
-Baseline,"['ecs_prompt_final_layer_per_head_max_layer_fft_mag_6', 'parameter_knowledge_difference_layer_fft_mag_3']",0.595679012345679,0.2986700525438864,0.5,0.5,0.5,0.5
