@@ -1,5 +1,3 @@
-# analysis_pruning.py
-
 # ==============================================================================
 # --- IMPORTS & SETUP ---
 # ==============================================================================
@@ -44,8 +42,6 @@ from interpret.glassbox import ExplainableBoostingClassifier
 # ==============================================================================
 # --- CONFIGURATION ---
 # ==============================================================================
-
-
 def config():
     """
     Sets up the command-line argument parser.
@@ -89,8 +85,6 @@ def config():
 # ==============================================================================
 # --- STANDALONE DATA LOADING & FEATURE ENGINEERING ---
 # ==============================================================================
-
-
 def seed_worker(worker_seed):
     """Initializes the random seed for each parallel worker."""
     np.random.seed(worker_seed)
@@ -308,8 +302,6 @@ def create_aggregate_features(df_per_layer: pd.DataFrame):
 # ==============================================================================
 # --- CORE PIPELINE FUNCTIONS ---
 # ==============================================================================
-
-
 def stage1a_rank_all_components(X_dev, y_dev, output_dir):
     """
     Calculates and saves the Pearson correlation of every single raw component
@@ -524,26 +516,21 @@ def get_feature_importances(model, feature_names):
     """
     classifier = model
     if isinstance(model, Pipeline):
-        # If it's a pipeline, get the final classifier step
         classifier = model.steps[-1][1]
 
     if hasattr(classifier, "coef_"):
-        # For linear models like Logistic Regression
         return pd.DataFrame(
             {"feature": feature_names, "importance": np.abs(classifier.coef_[0])}
         )
     elif hasattr(classifier, "feature_importances_"):
-        # For standard scikit-learn tree-based models like LightGBM
         return pd.DataFrame(
             {"feature": feature_names, "importance": classifier.feature_importances_}
         )
     elif isinstance(classifier, ExplainableBoostingClassifier):
-        # Specific handling for EBM
         return pd.DataFrame(
             {"feature": feature_names, "importance": classifier.term_importances()}
         )
 
-    # Return empty if no known importance attribute is found
     return pd.DataFrame()
 
 
@@ -561,7 +548,7 @@ def run_final_cv_and_analysis(
     Runs the main 10x10 repeated stratified cross-validation.
     On each fold, it performs top-k pruning on the train set, builds aggregate features,
     trains the models, and evaluates on the test set.
-    MODIFIED: Now collects and returns test fold data for qualitative analysis.
+    Collects and returns test fold data for qualitative analysis.
     """
     print(f"\n--- Stage 4 (k={k}%): Running Final 10x10 CV with On-the-Fly Pruning ---")
     n_splits, n_repeats = 10, 10
@@ -572,7 +559,7 @@ def run_final_cv_and_analysis(
     all_scores = defaultdict(lambda: defaultdict(list))
     all_importances_list = []
     all_selections_list = []
-    all_holdout_data = defaultdict(list)  # NEW: To store data for plotting
+    all_holdout_data = defaultdict(list)  
 
     pbar = tqdm(
         rskf.split(X_per_layer_full, y_full),
@@ -652,7 +639,7 @@ def run_final_cv_and_analysis(
                 )[:, 1]
                 preds = (probas > 0.5).astype(int)
 
-                # --- Store Scores ---
+                # Store scores
                 scores = all_scores[(model_name, combo_name)]
                 scores["AUC"].append(roc_auc_score(y_test, probas))
                 scores["PCC"].append(pearsonr(y_test, probas)[0])
@@ -662,13 +649,13 @@ def run_final_cv_and_analysis(
                 scores["Recall"].append(recall_score(y_test, preds, zero_division=0))
                 scores["F1"].append(f1_score(y_test, preds, zero_division=0))
 
-                # --- Store Feature Importances ---
+                # Store feature importances
                 imp_df = get_feature_importances(current_model, final_feature_list)
                 if not imp_df.empty:
                     imp_df["model"], imp_df["combo"] = model_name, combo_name
                     all_importances_list.append(imp_df)
 
-                # --- NEW: Store Minimal Holdout Data for Plotting ---
+                # Store minimal holdout data for plotting
                 holdout_fold_df = X_test_pruned_agg[final_feature_list].copy()
                 holdout_fold_df["label"] = y_test
                 holdout_fold_df["probability"] = probas
@@ -691,7 +678,6 @@ def report_significance_and_importances(
     """
     print("\n--- Stage 5: Performing Statistical Analysis and Reporting ---")
 
-    # --- Significance Testing ---
     final_results = []
     metrics = ["AUC", "PCC", "Precision", "Recall", "F1"]
 
@@ -699,15 +685,13 @@ def report_significance_and_importances(
     comparisons_to_make = [
         ("Baseline", "Ours 1"),
         ("Baseline", "Ours 2"),
-        ("Ours 1", "Ours 2"),  # Added comparison
+        ("Ours 1", "Ours 2"), 
     ]
 
     for model_name in models.keys():
         model_tests = []
-        # Iterate through the defined comparison pairs
         for base_combo, comp_combo in comparisons_to_make:
             for metric in metrics:
-                # Fetch scores for the base and comparison combinations
                 base_scores = all_scores.get((model_name, base_combo), {}).get(
                     metric, []
                 )
@@ -715,15 +699,14 @@ def report_significance_and_importances(
                     metric, []
                 )
 
-                # Ensure scores are valid for a paired test
                 if (
                     not base_scores
                     or not comp_scores
                     or len(base_scores) != len(comp_scores)
                 ):
                     continue
-
-                # Paired t-test: alternative='greater' tests if comp_scores > base_scores
+                
+                # Use paired t-test for significance
                 t_stat, p_value = ttest_rel(
                     comp_scores, base_scores, alternative="greater"
                 )
@@ -755,7 +738,7 @@ def report_significance_and_importances(
 
     final_report_df = pd.DataFrame(final_results)
 
-    # --- Feature Importance Processing ---
+    # Feature importance processing
     avg_importances_df = pd.DataFrame()
     if not all_importances_df.empty:
         avg_importances_df = (
@@ -833,7 +816,7 @@ def generate_qualitative_plots(
     if not violin_features:
         return []
 
-    # --- Significance Test Data Prep ---
+    # Significance test data prep
     significance_results = []
     data_df["label_str"] = data_df["label"].map({0: "Correct", 1: "Hallucinated"})
 
@@ -850,7 +833,7 @@ def generate_qualitative_plots(
             ]
         )
 
-    # --- Plotting ---
+    # Plotting 
     num_viol_cols = 2
     num_viol_rows = math.ceil(len(violin_features) / num_viol_cols)
     fig_viol, axes_viol = plt.subplots(
@@ -891,7 +874,7 @@ def generate_qualitative_plots(
         ax.set_xlabel("")
         ax.set_ylabel("Score" if ax.get_subplotspec().is_first_col() else "")
 
-        # --- Perform and Annotate Statistical Tests ---
+        # Perform and annotate statistical sests 
         group_correct_full = data_df.loc[data_df["label"] == 0, feature]
         group_halluc_full = data_df.loc[data_df["label"] == 1, feature]
 
@@ -998,7 +981,7 @@ def run_qualitative_analysis(
         )
         os.makedirs(model_plot_dir, exist_ok=True)
 
-        # --- 1. Single Fold Analysis (using the first fold) ---
+        # Single fold analysis (using the first fold)
         single_fold_df = fold_data_list[0]
         single_fold_results = generate_qualitative_plots(
             data_df=single_fold_df,
@@ -1013,7 +996,7 @@ def run_qualitative_analysis(
         )
         all_significance_results.extend(single_fold_results)
 
-        # --- 2. Aggregated Folds Analysis ---
+        # Aggregated folds analysis
         aggregated_df = pd.concat(fold_data_list, ignore_index=True)
 
         # For the aggregated confident plot, we pool confident examples from each fold
@@ -1197,27 +1180,23 @@ if __name__ == "__main__":
         "Ours 2": ["cas", "pfs", "bas", "pas"],
     }
 
-    # This script now runs for a single k, passed from the command line
     k = args.k_percent
 
     print(f"\n{'=' * 80}\nSTARTING FULL ANALYSIS PIPELINE FOR k = {k}%\n{'=' * 80}")
     k_output_dir = os.path.join(args.base_dir, f"ablation_k_{k}")
     os.makedirs(k_output_dir, exist_ok=True)
 
-    # --- Load Data ONCE ---
+    # Load data 
     print("Loading all data for the pipeline...")
     full_df = load_full_imbalanced_data(args.results_file, cpu_count(), SEED)
     X_per_layer_full, y_full, NUM_LAYERS, NUM_HEADS = create_per_layer_features(full_df)
 
-    # --- Create Dev Split for Feature Selection ONLY ---
-    # This split is NOT used for final evaluation or plotting anymore.
+    # Create dev split for feature selection
     X_per_layer_dev, _, y_dev, _ = train_test_split(
         X_per_layer_full, y_full, test_size=0.2, random_state=SEED, stratify=y_full
     )
     X_agg_dev = create_aggregate_features(X_per_layer_dev)
     X_agg_full = create_aggregate_features(X_per_layer_full)  # For validation report
-
-    # --- The Rest of the Pipeline (Stages 1-7) ---
 
     # Stage 1A: Rank all raw components on the dev set
     stage1a_rank_all_components(X_per_layer_dev, y_dev, k_output_dir)
@@ -1240,7 +1219,7 @@ if __name__ == "__main__":
         dream_teams, X_agg_full, y_full, k_output_dir, FEATURE_CONCEPT_PREFIXES
     )
 
-    # Stage 4 & 5: Run final CV on the full dataset, get scores, importances, significance, AND holdout data
+    # Stage 4 & 5: Run final CV on the full dataset, get scores, importances, significance, and holdout data
     all_scores, avg_importances_df, all_selections, all_holdout_data = (
         run_final_cv_and_analysis(
             X_per_layer_full,
@@ -1273,7 +1252,7 @@ if __name__ == "__main__":
         args=args,
     )
 
-    # Stage 7: Analyze and Visualize Component Selections
+    # Stage 7: Analyze and visualize component selections
     stage7_report_and_visualize_selections(
         all_selections, FEATURE_CONCEPT_PREFIXES, k, k_output_dir, NUM_LAYERS, NUM_HEADS
     )

@@ -19,6 +19,7 @@ FACTUM-main/scale/results/llama3.2-3b_neuclir24/plots/
 FACTUM-main/scale/results/llama3.1-8b_neuclir24/analysis10/
 FACTUM-main/scale/results/llama3.2-3b_neuclir24/analysis10/
 
+FACTUM-main/FACTUM/citation_token_detect_long_all.py
 # # Ignore all folders inside analysis10 folder
 # FACTUM-main/scale/results/llama3.1-8b_neuclir24/analysis10/12_feature_rank_comprehensive/*
 # FACTUM-main/scale/results/llama3.2-3b_neuclir24/analysis10/12_feature_rank_comprehensive/*

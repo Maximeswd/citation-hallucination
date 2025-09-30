@@ -22,3 +22,13 @@ To dive into the implementation of our method and the specifics of our experimen
 
 ```bash
 cd FACTUM-main
+
+# ## 
+# @inproceedings{
+#   maxdas,
+#   title={{FACTUM}: Mechanistic Detection of Citation Hallucination in Long-Form RAG},
+#   author={Maxime Dassen, Rebecca Kotula, Kenton Murray, Andrew Yates, Dawn Lawrie, Efsun Kayi, James Mayfield Kevin Duh},
+#   booktitle={The Twelfth International Conference on Learning Representations},
+#   year={2025},
+#   url={https://openreview.net/}
+# }

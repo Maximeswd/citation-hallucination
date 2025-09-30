@@ -52,8 +52,6 @@ def config():
 # ==============================================================================
 # --- REPRODUCIBLE DATA LOADING (WITH ALL FIXES) ---
 # ==============================================================================
-
-
 args = config()
 SEED = args.seed
 np.random.seed(SEED)
@@ -231,7 +229,7 @@ def generate_descriptive_stats(
 
     report_lines = []
 
-    # Sample distribution section ---
+    # Sample distribution section
     report_lines.append("=" * 115)
     report_lines.append("SAMPLE DISTRIBUTION REPORT")
     report_lines.append("=" * 115)
@@ -433,33 +431,27 @@ def plot_generic_heatmap(
     )
     diff = true_mean - hall_mean
 
-    # Increased figsize to give more space for larger fonts
     fig, axes = plt.subplots(
         1, 3, figsize=(40, 12), gridspec_kw={"width_ratios": [1, 1, 1.15]}
     )
 
-    # Increased main title fontsize
     fig.suptitle(f"{plot_title_prefix} per Head/Layer", fontsize=30)
 
-    # Set common color limits for the first two heatmaps
     vmin, vmax = (
         min(np.nanmin(true_mean), np.nanmin(hall_mean)),
         max(np.nanmax(true_mean), np.nanmax(hall_mean)),
     )
 
-    # Plot Factual Tokens
     sns.heatmap(true_mean, cmap="viridis", vmin=vmin, vmax=vmax, ax=axes[0], cbar=False)
     axes[0].set_title("Factual Tokens", fontsize=24)
     axes[0].set_xlabel("Layer", fontsize=20)
     axes[0].set_ylabel("Head", fontsize=20)
 
-    # Plot Hallucinated Tokens
     sns.heatmap(hall_mean, cmap="viridis", vmin=vmin, vmax=vmax, ax=axes[1], cbar=False)
     axes[1].set_title("Hallucinated Tokens", fontsize=24)
     axes[1].set_xlabel("Layer", fontsize=20)
     axes[1].set_ylabel("")  
 
-    # Plot Difference 
     diff_max = np.nanmax(np.abs(diff))
     cbar_kws = {"label": "Difference (Factual - Hallucinated)"}
     sns.heatmap(
@@ -475,7 +467,6 @@ def plot_generic_heatmap(
     axes[2].set_xlabel("Layer", fontsize=20)
     axes[2].set_ylabel("")  
 
-    # Set font size for the color bar label on the third plot
     cbar = axes[2].collections[0].colorbar
     cbar.ax.get_yaxis().label.set_size(20)
     cbar.ax.tick_params(labelsize=16)
@@ -486,7 +477,7 @@ def plot_generic_heatmap(
         plt.setp(ax.get_yticklabels(), rotation=0, ha="right")
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])  
-    # Save the figure
+
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     plt.savefig(os.path.join(out_dir, f"{filename_prefix}_heatmaps.png"), dpi=300)
@@ -506,13 +497,6 @@ def plot_all_per_layer_metrics(
         "POS Score": "pos_score_per_layer",
         "V_attn Norm": "v_attn_norm_per_layer",
         "V_ffn Norm": "v_ffn_norm_per_layer",
-        "X_input Norm": "x_input_norm_per_layer",
-        "X_pre_ffn Norm": "x_pre_ffn_norm_per_layer",
-        "X_post_ffn Norm": "x_post_ffn_norm_per_layer",
-        "Semantic Drift": "semantic_drift_per_layer",
-        "Cosim input-pre_ffn": "cos_sim_input_pre_ffn_per_layer",
-        "Cosim pre-post_ffn": "cos_sim_pre_post_ffn_per_layer",
-        "Cosim input-post_ffn": "cos_sim_input_post_ffn_per_layer",
     }
     n_metrics = len(metrics)
     if n_metrics == 0:
@@ -664,7 +648,7 @@ def plot_correlation_barplots(true_samples, hall_samples, out_dir):
 
     label = np.array([s["label"] for s in all_samples])
     metrics = {
-        "POS_Score": "pos_score_per_layer",
+        "POS_Score": "pos_cos_similarity_per_layer",
         "PKS_Score": "parameter_knowledge_difference",
         "V_ffn": "v_ffn_norm_per_layer",
     }
@@ -714,7 +698,7 @@ def plot_correlation_heatmaps(
 
     label = np.array([s["label"] for s in all_samples])
     metrics = {
-        "ecs_vs_final": "ecs_final_layer_per_head",
+        "cas_alt_vs_final": "cas_alt_vs_final_layer_per_head",
         "ecs_prompt_final": "ecs_prompt_final_layer_per_head",
         "attn_dispersion": "attn_dispersion_per_head",
         "bos_attention": "bos_attention",
@@ -1080,27 +1064,27 @@ def plot_alignment_conflict_plane(true_samples, hall_samples, out_dir):
 
     # We use the mean of the per-head CAS scores for each token
     true_cas_scores = [
-        np.mean(s["ecs_final_layer_per_head"])
+        np.mean(s["cas_alt_vs_final_layer_per_head"])
         for s in true_samples
-        if "ecs_final_layer_per_head" in s and s["ecs_final_layer_per_head"]
+        if "cas_alt_vs_final_layer_per_head" in s and s["cas_alt_vs_final_layer_per_head"]
     ]
     hall_cas_scores = [
-        np.mean(s["ecs_final_layer_per_head"])
+        np.mean(s["cas_alt_vs_final_layer_per_head"])
         for s in hall_samples
-        if "ecs_final_layer_per_head" in s and s["ecs_final_layer_per_head"]
+        if "cas_alt_vs_final_layer_per_head" in s and s["cas_alt_vs_final_layer_per_head"]
     ]
 
-    # Pathway Orthogonality Score (POS)
+    # Pathway Alignment Score (PAS)
     # We use the mean of the per-layer POS scores for each token.
     true_pos_scores = [
-        np.mean(s["pos_score_per_layer"])
+        np.mean(s["pos_cos_similarity_per_layer"])
         for s in true_samples
-        if "pos_score_per_layer" in s and s["pos_score_per_layer"]
+        if "pos_cos_similarity_per_layer" in s and s["pos_cos_similarity_per_layer"]
     ]
     hall_pos_scores = [
-        np.mean(s["pos_score_per_layer"])
+        np.mean(s["pos_cos_similarity_per_layer"])
         for s in hall_samples
-        if "pos_score_per_layer" in s and s["pos_score_per_layer"]
+        if "pos_cos_similarity_per_layer" in s and s["pos_cos_similarity_per_layer"]
     ]
 
     plt.figure(figsize=(11, 9))
@@ -1310,35 +1294,26 @@ def main():
 
     metric_pairs_to_correlate = [
         ('ecs_prompt_final_layer_per_head', 'bos_attention_proportion_per_head'),
-        ('ecs_final_layer_per_head', 'bos_attention_proportion_per_head')
+        ('cas_alt_vs_final_layer_per_head', 'bos_attention_proportion_per_head')
     ]
     report_inter_metric_correlations(true_samples, hall_samples, args.out_dir, metric_pairs_to_correlate)
 
     print("\n--- Starting Plot Generation ---")
 
     heatmap_tasks = {
-        'cas_vs_final_layer_per_head': 'CAS vs Final', 'cas_vs_current_layer_per_head': 'CAS vs Current',
-        'cas_alt_vs_final_layer_per_head': 'CAS-Alt vs Final', 'cas_alt_vs_current_layer_per_head': 'CAS-Alt vs Current',
-        'ecs_final_layer_per_head': 'ECS (Context) vs Final', 'ecs_specific_layer_per_head': 'ECS (Context) vs Specific',
-        'ecs_prompt_final_layer_per_head': 'ECS (Prompt) vs Final', 'ecs_prompt_specific_layer_per_head': 'ECS (Prompt) vs Specific',
-        'attention_entropy_per_head': 'Attention Entropy', 'bos_attention_proportion_per_head': '<bos> Attention',
-        'attn_dispersion_per_head': 'Attention Dispersion (Focus)'
+        'cas_alt_vs_final_layer_per_head': 'CAS-Alt vs Final', 
+        'ecs_prompt_final_layer_per_head': 'ECS (Prompt) vs Final', 
+        'bos_attention_proportion_per_head': '<bos> Attention',
     }
     for key, title in tqdm(heatmap_tasks.items(), desc="Generating Heatmaps"):
         plot_generic_heatmap(true_samples, hall_samples, args.out_dir, args.num_layers, args.num_heads, key, title, key)
 
     plot_all_per_layer_metrics(true_samples, hall_samples, args.out_dir, args.num_layers, args.num_heads)
-    plot_single_metric_diff_bar(true_samples, hall_samples, args.out_dir, "pos_score_per_layer", "Pathway Orthogonality Score Difference", "pos_plot_difference.png")
+    plot_single_metric_diff_bar(true_samples, hall_samples, args.out_dir, "pos_cos_similarity_per_layer", "Pathway Orthogonality Score Difference", "pos_plot_difference.png")
     plot_single_metric_diff_bar(true_samples, hall_samples, args.out_dir, "parameter_knowledge_difference", "Parametric Knowledge Score Difference", "pks_plot_difference.png")
-    plot_single_metric_diff_bar(true_samples, hall_samples, args.out_dir, "cos_sim_input_pre_ffn_per_layer", "Cosim input - pre", "cosim_input_pre_diff.png")
-    plot_single_metric_diff_bar(true_samples, hall_samples, args.out_dir, "cos_sim_pre_post_ffn_per_layer", "Cosim post - pre", "cosim_post_pre_diff.png")
-    plot_single_metric_diff_bar(true_samples, hall_samples, args.out_dir, "cos_sim_input_post_ffn_per_layer", "Cosim input - post", "cosim_input_post_diff.png")
     plot_single_metric_diff_bar(true_samples, hall_samples, args.out_dir, "v_ffn_norm_per_layer", "V_ffn L2 Norm Score Difference", "vffn_plot_difference.png")
-
     plot_correlation_heatmaps(true_samples, hall_samples, args.out_dir, args.num_layers, args.num_heads)
     plot_correlation_barplots(true_samples, hall_samples, args.out_dir)
-    plot_attention_distributions(true_samples, hall_samples, args.out_dir, 'top_p_attended_positions_per_head', 'Whole Prompt', 'whole_prompt')
-    plot_attention_distributions(true_samples, hall_samples, args.out_dir, 'top_p_attended_context_positions_per_head', 'Context Only', 'context_only')
     plot_top_p_token_type_frequency(true_samples, hall_samples, args.out_dir)
     plot_peak_pathway_force_distribution(true_samples, hall_samples, args.out_dir)
     plot_alignment_conflict_plane(true_samples, hall_samples, args.out_dir)

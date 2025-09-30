@@ -1,3 +1,7 @@
+# ==============================================================================
+# --- IMPORTS & SETUP ---
+# ==============================================================================
+
 import argparse
 import json
 import re
@@ -154,7 +158,7 @@ def citation(
                 elif value == 0.0 or value == 0.25:
                     label_type = "bad"
                 else:
-                    continue  # Skip otherwise
+                    continue  
 
                 # Construct the snippet to find its location in full response
                 snippet = f"{resp['text'][:-1]} {new_key}."
@@ -246,22 +250,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-# python scale/transform_data.py \
-#   --data_path /exp/mdassen/redeep/gpt-researcher-main/results/raw/llama3.1-8b_neuclir24_reports_cleaned_judged.jsonl \
-#   --log_path /exp/mdassen/redeep/gpt-researcher-main/results/raw/llama3.1-8b_neuclir24_reports.jsonl.log \
-#   --response_output_path /exp/mdassen/redeep/ReDEeP-ICLR-main/dataset/scale/NeuCLIR24/citation/single/not_rel/llama3.1-8b_neuclir24_response.jsonl \
-#   --source_output_path /exp/mdassen/redeep/ReDEeP-ICLR-main/dataset/scale/NeuCLIR24/citation/single/not_rel/llama3.1-8b_neuclir24_source_info.jsonl \
-#   --model_name llama-3.1-8b-instruct \
-#   --citation
-
-
-# python scale/transform_data.py \
-#   --data_path /exp/mdassen/redeep/gpt-researcher-main/results/ARGUE/old/llama3.2-3b_neuclir24_reports_cleaned_judged.jsonl \
-#   --log_path /exp/mdassen/redeep/gpt-researcher-main/results/ARGUE/old/test-output_3.2-3b.jsonl.log \
-#   --response_output_path /exp/mdassen/redeep/ReDEeP-ICLR-main/dataset/scale/NeuCLIR24/citation/rel/llama3.2-3b_neuclir24_response.jsonl \
-#   --source_output_path /exp/mdassen/redeep/ReDEeP-ICLR-main/dataset/scale/NeuCLIR24/citation/rel/llama3.2-3b_neuclir24_source_info.jsonl \
-#   --model_name llama-3.2-3b-instruct \
-#   --citation
