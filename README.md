@@ -22,7 +22,10 @@ To dive into the implementation of our method and the specifics of our experimen
 
 ```bash
 cd FACTUM-main
+```
 
+
+<!-- 
 # ## 
 # @inproceedings{
 #   maxdas,
@@ -31,4 +34,4 @@ cd FACTUM-main
 #   booktitle={The Twelfth International Conference on Learning Representations},
 #   year={2025},
 #   url={https://openreview.net/}
-# }
+# } -->
