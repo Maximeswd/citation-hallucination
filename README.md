@@ -1,6 +1,6 @@
 # FACTUM: A Mechanistic Framework for Citation Hallucination Detection
 
-This repository contains the official code and data for the FACTUM framework used for citation hallucination detection. This framework consists of four mechanistic scores designed to use a model's internal states to reliably detect citation hallucinations in Retrieval-Augmented Generation (RAG) models.
+This repository contains the official code and data for the FACTUM framework used for citation hallucination detection. This framework consists of four mechanistic scores designed to use a model's internal states to reliably detect citation hallucinations in long-form Retrieval-Augmented Generation (RAG) models.
 
 ## Repository Structure
 
@@ -12,9 +12,9 @@ This repository is organized into one main directory. Below is a high-level over
 
 *   `jobs/`: Here, you will find the full logs from the generation process as well as the job submission script that was used. This allows for a complete audit trail of how the base data in the `ARGUE` folder was created. -->
 
-### Data Completeness Note
+<!-- ### Data Completeness Note
 
-The raw reports in the `ARGUE` folder were used to create the final datasets for our study. To ensure a sufficiently large and diverse dataset for analysis, we combined data from two separate generation runs for each model. This combined and processed data, which served as the input for our scoring methods, is located in the `FACTUM-main` directory. 
+The raw reports in the `ARGUE` folder were used to create the final datasets for our study. To ensure a sufficiently large and diverse dataset for analysis, we combined data from two separate generation runs for each model. This combined and processed data, which served as the input for our scoring methods, is located in the `FACTUM-main` directory.  -->
 
 ## Getting Started
 
