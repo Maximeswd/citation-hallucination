@@ -1,8 +1,13 @@
 # FACTUM-main: Core Implementation
 
+[![arXiv](https://img.shields.io/badge/arXiv-2501.xxxxx-b31b1b.svg)](https://arxiv.org/abs/2501.xxxxx) 
+[![Data](https://img.shields.io/badge/Data-NeuCLIR-success)](https://neuclir.github.io/)
+[![GitHub](https://img.shields.io/badge/GitHub-Project-blue)](https://github.com/Maximeswd/citation-hallucination)
+
 Welcome to the core directory for the FACTUM framework. This folder contains all the necessary code, scripts, and data for citation hallucination detection using FACTUM.
 
 This guide provides a step-by-step process for setting up the environment, configuring the project, and running the analysis.
+
 
 ## Prerequisites
 

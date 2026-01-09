@@ -2,6 +2,10 @@
 
 This repository contains the official code and data for the FACTUM framework used for citation hallucination detection. This framework consists of four mechanistic scores designed to use a model's internal states to reliably detect citation hallucinations in long-form Retrieval-Augmented Generation (RAG) models.
 
+[![arXiv](https://img.shields.io/badge/arXiv-2501.xxxxx-b31b1b.svg)](https://arxiv.org/abs/2501.xxxxx) 
+[![Data](https://img.shields.io/badge/Data-NeuCLIR-success)](https://neuclir.github.io/)
+[![GitHub](https://img.shields.io/badge/GitHub-Project-blue)](https://github.com/Maximeswd/citation-hallucination)
+
 ## Repository Structure
 
 This repository is organized into one main directory. Below is a high-level overview of its contents and purpose:
@@ -24,14 +28,17 @@ To dive into the implementation of our method and the specifics of our experimen
 cd FACTUM-main
 ```
 
+## Citation
+If you find this work useful for your research, please cite our paper:
 
-<!-- 
-# ## 
-# @inproceedings{
-#   maxdas,
-#   title={{FACTUM}: Mechanistic Detection of Citation Hallucination in Long-Form RAG},
-#   author={Maxime Dassen, Rebecca Kotula, Kenton Murray, Andrew Yates, Dawn Lawrie, Efsun Kayi, James Mayfield Kevin Duh},
-#   booktitle={The Twelfth International Conference on Learning Representations},
-#   year={2025},
-#   url={https://openreview.net/}
-# } -->
+```bibtex
+@inproceedings{dassen2026factum,
+  author    = {Dassen, Maxime and Kotula, Rebecca and Murray, Kenton and Yates, Andrew and Lawrie, Dawn and Kayi, Efsun and Mayfield, James and Duh, Kevin},
+  title     = {{FACTUM}: Mechanistic Detection of Citation Hallucination in Long-Form {RAG}},
+  booktitle = {Advances in Information Retrieval. 48th European Conference on Information Retrieval, {ECIR} 2026, Proceedings},
+  year      = {2026},
+  publisher = {Springer},
+  series    = {Lecture Notes in Computer Science},
+  url       = {https://arxiv.org/abs/26xx.xxxxx}
+}
+```
