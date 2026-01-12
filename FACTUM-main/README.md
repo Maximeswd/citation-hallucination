@@ -13,7 +13,7 @@ This guide provides a step-by-step process for setting up the environment, confi
 
 Before you begin, please ensure you have the following installed:
 *   Anaconda/Miniconda or venv to manage the environment.
-*   An NVIDIA GPU. Our experiments were specifically run with **NVIDIA V100** GPUs.
+*   A GPU (preferably NVIDIA for reproducability). Our experiments were specifically run with **NVIDIA V100** GPUs.
 
 ---
 
