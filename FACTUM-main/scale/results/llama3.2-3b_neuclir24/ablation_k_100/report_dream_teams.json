@@ -1,50 +1,50 @@
 {
     "Logistic Regression": {
         "Baseline": [
-            "parameter_knowledge_difference_fft_mag_3",
-            "ecs_prompt_final_layer_per_head_fft_mag_4"
+            "ecs_prompt_final_layer_per_head_std",
+            "parameter_knowledge_difference_fft_mag_5"
         ],
         "Ours 1": [
-            "v_ffn_norm_per_layer_mean",
-            "cas_alt_vs_final_layer_per_head_fft_mag_5"
+            "cas_alt_vs_final_layer_per_head_std",
+            "v_ffn_norm_per_layer_std"
         ],
         "Ours 2": [
-            "v_ffn_norm_per_layer_mean",
-            "pos_cos_similarity_per_layer_sum",
+            "pos_cos_similarity_per_layer_fft_mag_5",
+            "v_ffn_norm_per_layer_max",
             "bos_attention_proportion_per_head_fft_mag_1",
-            "cas_alt_vs_final_layer_per_head_fft_mag_3"
+            "cas_alt_vs_final_layer_per_head_max"
         ]
     },
     "LightGBM": {
         "Baseline": [
-            "parameter_knowledge_difference_slope",
-            "ecs_prompt_final_layer_per_head_fft_mag_4"
+            "ecs_prompt_final_layer_per_head_slope",
+            "parameter_knowledge_difference_mean"
         ],
         "Ours 1": [
-            "cas_alt_vs_final_layer_per_head_std",
-            "v_ffn_norm_per_layer_fft_mag_2"
+            "v_ffn_norm_per_layer_fft_mag_4",
+            "cas_alt_vs_final_layer_per_head_fft_mag_2"
         ],
         "Ours 2": [
-            "pos_cos_similarity_per_layer_fft_mag_2",
-            "v_ffn_norm_per_layer_max",
-            "cas_alt_vs_final_layer_per_head_fft_mag_1",
-            "bos_attention_proportion_per_head_fft_mag_1"
+            "v_ffn_norm_per_layer_fft_mag_4",
+            "pos_cos_similarity_per_layer_fft_mag_5",
+            "bos_attention_proportion_per_head_std",
+            "cas_alt_vs_final_layer_per_head_fft_mag_2"
         ]
     },
     "EBM": {
         "Baseline": [
-            "parameter_knowledge_difference_fft_mag_1",
-            "ecs_prompt_final_layer_per_head_fft_mag_4"
+            "ecs_prompt_final_layer_per_head_slope",
+            "parameter_knowledge_difference_fft_mag_3"
         ],
         "Ours 1": [
-            "v_ffn_norm_per_layer_sum",
-            "cas_alt_vs_final_layer_per_head_fft_mag_1"
+            "cas_alt_vs_final_layer_per_head_std",
+            "v_ffn_norm_per_layer_std"
         ],
         "Ours 2": [
-            "pos_cos_similarity_per_layer_fft_mag_2",
-            "cas_alt_vs_final_layer_per_head_std",
-            "v_ffn_norm_per_layer_fft_mag_2",
-            "bos_attention_proportion_per_head_fft_mag_1"
+            "cas_alt_vs_final_layer_per_head_fft_mag_5",
+            "v_ffn_norm_per_layer_max",
+            "bos_attention_proportion_per_head_fft_mag_1",
+            "pos_cos_similarity_per_layer_max"
         ]
     }
 }

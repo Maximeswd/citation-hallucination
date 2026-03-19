@@ -1,49 +1,97 @@
 Test_Data_Scope,k_percent,Classifier,Model_Combination,Mechanistic_Concept,Most_Important_Feature,MannWhitneyU_statistic,p_value,Is_Significant_p<0.05
-Full_Holdout,100,Logistic Regression,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_3,846.00000,0.21199,No
-Confident_Subset,100,Logistic Regression,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_3,100.00000,0.00018,Yes
-Full_Holdout,100,Logistic Regression,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,953.00000,0.02503,Yes
-Confident_Subset,100,Logistic Regression,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,68.00000,0.18588,No
-Full_Holdout,100,Logistic Regression,Ours 1,PFS,v_ffn_norm_per_layer_mean,961.00000,0.02060,Yes
-Confident_Subset,100,Logistic Regression,Ours 1,PFS,v_ffn_norm_per_layer_mean,100.00000,0.00018,Yes
-Full_Holdout,100,Logistic Regression,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_5,615.00000,0.37551,No
-Confident_Subset,100,Logistic Regression,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_5,79.00000,0.03121,Yes
-Full_Holdout,100,Logistic Regression,Ours 2,PAS,pos_cos_similarity_per_layer_sum,665.00000,0.67286,No
-Confident_Subset,100,Logistic Regression,Ours 2,PAS,pos_cos_similarity_per_layer_sum,13.00000,0.00580,Yes
-Full_Holdout,100,Logistic Regression,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,1091.00000,0.00043,Yes
-Confident_Subset,100,Logistic Regression,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,100.00000,0.00018,Yes
-Full_Holdout,100,Logistic Regression,Ours 2,PFS,v_ffn_norm_per_layer_mean,961.00000,0.02060,Yes
-Confident_Subset,100,Logistic Regression,Ours 2,PFS,v_ffn_norm_per_layer_mean,99.00000,0.00025,Yes
-Full_Holdout,100,Logistic Regression,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_3,797.00000,0.42754,No
-Confident_Subset,100,Logistic Regression,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_3,72.00000,0.10411,No
-Full_Holdout,100,LightGBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_slope,630.00000,0.45506,No
-Confident_Subset,100,LightGBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_slope,25.00000,0.06402,No
-Full_Holdout,100,LightGBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,953.00000,0.02503,Yes
-Confident_Subset,100,LightGBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,72.00000,0.10411,No
-Full_Holdout,100,LightGBM,Ours 1,PFS,v_ffn_norm_per_layer_fft_mag_2,936.00000,0.03723,Yes
-Confident_Subset,100,LightGBM,Ours 1,PFS,v_ffn_norm_per_layer_fft_mag_2,86.00000,0.00728,Yes
-Full_Holdout,100,LightGBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,813.00000,0.34626,No
-Confident_Subset,100,LightGBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,55.00000,0.73373,No
-Full_Holdout,100,LightGBM,Ours 2,PFS,v_ffn_norm_per_layer_max,837.50000,0.24230,No
-Confident_Subset,100,LightGBM,Ours 2,PFS,v_ffn_norm_per_layer_max,59.00000,0.52021,No
-Full_Holdout,100,LightGBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,1091.00000,0.00043,Yes
-Confident_Subset,100,LightGBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,100.00000,0.00018,Yes
-Full_Holdout,100,LightGBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_2,831.00000,0.26747,No
-Confident_Subset,100,LightGBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_2,66.00000,0.24132,No
-Full_Holdout,100,LightGBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_1,649.00000,0.56821,No
-Confident_Subset,100,LightGBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_1,22.00000,0.03764,Yes
-Full_Holdout,100,EBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_1,874.00000,0.13157,No
-Confident_Subset,100,EBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_1,99.00000,0.00025,Yes
-Full_Holdout,100,EBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,953.00000,0.02503,Yes
-Confident_Subset,100,EBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_fft_mag_4,66.00000,0.24132,No
-Full_Holdout,100,EBM,Ours 1,PFS,v_ffn_norm_per_layer_sum,961.00000,0.02060,Yes
-Confident_Subset,100,EBM,Ours 1,PFS,v_ffn_norm_per_layer_sum,100.00000,0.00018,Yes
-Full_Holdout,100,EBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_1,649.00000,0.56821,No
-Confident_Subset,100,EBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_1,3.00000,0.00044,Yes
-Full_Holdout,100,EBM,Ours 2,PFS,v_ffn_norm_per_layer_fft_mag_2,936.00000,0.03723,Yes
-Confident_Subset,100,EBM,Ours 2,PFS,v_ffn_norm_per_layer_fft_mag_2,78.00000,0.03764,Yes
-Full_Holdout,100,EBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,1091.00000,0.00043,Yes
-Confident_Subset,100,EBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,100.00000,0.00018,Yes
-Full_Holdout,100,EBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_2,831.00000,0.26747,No
-Confident_Subset,100,EBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_2,60.00000,0.47268,No
-Full_Holdout,100,EBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_std,813.00000,0.34626,No
-Confident_Subset,100,EBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_std,74.00000,0.07566,No
+Full_Single_Fold,100,Logistic Regression,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_std,112.00000,0.31081,No
+Confident_Single_Fold,100,Logistic Regression,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_std,61.00000,0.07739,No
+Full_Single_Fold,100,Logistic Regression,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_5,75.00000,0.49427,No
+Confident_Single_Fold,100,Logistic Regression,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_5,48.00000,0.53650,No
+Full_All_Folds,100,Logistic Regression,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_std,1183500.00000,0.00000,Yes
+Confident_All_Folds,100,Logistic Regression,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_std,100.00000,0.00012,Yes
+Full_All_Folds,100,Logistic Regression,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_5,999000.00000,0.00000,Yes
+Confident_All_Folds,100,Logistic Regression,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_5,96.00000,0.00041,Yes
+Full_Single_Fold,100,Logistic Regression,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,110.00000,0.35797,No
+Confident_Single_Fold,100,Logistic Regression,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,64.00000,0.04226,Yes
+Full_Single_Fold,100,Logistic Regression,Ours 1,PFS,v_ffn_norm_per_layer_std,120.00000,0.16433,No
+Confident_Single_Fold,100,Logistic Regression,Ours 1,PFS,v_ffn_norm_per_layer_std,63.00000,0.05206,No
+Full_All_Folds,100,Logistic Regression,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,1140600.00000,0.00000,Yes
+Confident_All_Folds,100,Logistic Regression,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,100.00000,0.00012,Yes
+Full_All_Folds,100,Logistic Regression,Ours 1,PFS,v_ffn_norm_per_layer_std,1153700.00000,0.00000,Yes
+Confident_All_Folds,100,Logistic Regression,Ours 1,PFS,v_ffn_norm_per_layer_std,100.00000,0.00012,Yes
+Full_Single_Fold,100,Logistic Regression,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,116.00000,0.22933,No
+Confident_Single_Fold,100,Logistic Regression,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,65.00000,0.03407,Yes
+Full_Single_Fold,100,Logistic Regression,Ours 2,CAS,cas_alt_vs_final_layer_per_head_max,98.00000,0.72367,No
+Confident_Single_Fold,100,Logistic Regression,Ours 2,CAS,cas_alt_vs_final_layer_per_head_max,55.00000,0.21637,No
+Full_Single_Fold,100,Logistic Regression,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_5,99.00000,0.68865,No
+Confident_Single_Fold,100,Logistic Regression,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_5,51.00000,0.37722,No
+Full_Single_Fold,100,Logistic Regression,Ours 2,PFS,v_ffn_norm_per_layer_max,116.00000,0.22927,No
+Confident_Single_Fold,100,Logistic Regression,Ours 2,PFS,v_ffn_norm_per_layer_max,58.00000,0.13332,No
+Full_All_Folds,100,Logistic Regression,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,1107798.00000,0.00000,Yes
+Confident_All_Folds,100,Logistic Regression,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,100.00000,0.00016,Yes
+Full_All_Folds,100,Logistic Regression,Ours 2,CAS,cas_alt_vs_final_layer_per_head_max,1150750.00000,0.00000,Yes
+Confident_All_Folds,100,Logistic Regression,Ours 2,CAS,cas_alt_vs_final_layer_per_head_max,100.00000,0.00012,Yes
+Full_All_Folds,100,Logistic Regression,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_5,1174800.00000,0.00000,Yes
+Confident_All_Folds,100,Logistic Regression,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_5,100.00000,0.00012,Yes
+Full_All_Folds,100,Logistic Regression,Ours 2,PFS,v_ffn_norm_per_layer_max,1185100.00000,0.00000,Yes
+Confident_All_Folds,100,Logistic Regression,Ours 2,PFS,v_ffn_norm_per_layer_max,100.00000,0.00012,Yes
+Full_Single_Fold,100,LightGBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_slope,91.00000,0.98120,No
+Confident_Single_Fold,100,LightGBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_slope,46.00000,0.65884,No
+Full_Single_Fold,100,LightGBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_mean,89.00000,0.98120,No
+Confident_Single_Fold,100,LightGBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_mean,48.00000,0.53650,No
+Full_All_Folds,100,LightGBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_slope,942245.00000,0.00597,Yes
+Confident_All_Folds,100,LightGBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_slope,80.00000,0.02558,Yes
+Full_All_Folds,100,LightGBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_mean,1062600.00000,0.00000,Yes
+Confident_All_Folds,100,LightGBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_mean,80.00000,0.02475,Yes
+Full_Single_Fold,100,LightGBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_2,130.00000,0.06260,No
+Confident_Single_Fold,100,LightGBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_2,71.00000,0.00807,Yes
+Full_Single_Fold,100,LightGBM,Ours 1,PFS,v_ffn_norm_per_layer_fft_mag_4,133.00000,0.04513,Yes
+Confident_Single_Fold,100,LightGBM,Ours 1,PFS,v_ffn_norm_per_layer_fft_mag_4,59.00000,0.11196,No
+Full_All_Folds,100,LightGBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_2,1116909.00000,0.00000,Yes
+Confident_All_Folds,100,LightGBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_fft_mag_2,70.00000,0.14017,No
+Full_All_Folds,100,LightGBM,Ours 1,PFS,v_ffn_norm_per_layer_fft_mag_4,1180800.00000,0.00000,Yes
+Confident_All_Folds,100,LightGBM,Ours 1,PFS,v_ffn_norm_per_layer_fft_mag_4,100.00000,0.00018,Yes
+Full_Single_Fold,100,LightGBM,Ours 2,BAS,bos_attention_proportion_per_head_std,88.00000,0.94363,No
+Confident_Single_Fold,100,LightGBM,Ours 2,BAS,bos_attention_proportion_per_head_std,49.00000,0.47993,No
+Full_Single_Fold,100,LightGBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_2,132.00000,0.05043,No
+Confident_Single_Fold,100,LightGBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_2,65.00000,0.03407,Yes
+Full_Single_Fold,100,LightGBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_5,99.00000,0.68865,No
+Confident_Single_Fold,100,LightGBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_5,43.00000,0.85982,No
+Full_Single_Fold,100,LightGBM,Ours 2,PFS,v_ffn_norm_per_layer_fft_mag_4,133.00000,0.04513,Yes
+Confident_Single_Fold,100,LightGBM,Ours 2,PFS,v_ffn_norm_per_layer_fft_mag_4,60.00000,0.09340,No
+Full_All_Folds,100,LightGBM,Ours 2,BAS,bos_attention_proportion_per_head_std,836800.00000,0.01807,Yes
+Confident_All_Folds,100,LightGBM,Ours 2,BAS,bos_attention_proportion_per_head_std,22.00000,0.03720,Yes
+Full_All_Folds,100,LightGBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_2,1113356.00000,0.00000,Yes
+Confident_All_Folds,100,LightGBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_2,100.00000,0.00018,Yes
+Full_All_Folds,100,LightGBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_5,1174800.00000,0.00000,Yes
+Confident_All_Folds,100,LightGBM,Ours 2,PAS,pos_cos_similarity_per_layer_fft_mag_5,67.00000,0.21126,No
+Full_All_Folds,100,LightGBM,Ours 2,PFS,v_ffn_norm_per_layer_fft_mag_4,1180800.00000,0.00000,Yes
+Confident_All_Folds,100,LightGBM,Ours 2,PFS,v_ffn_norm_per_layer_fft_mag_4,96.00000,0.00057,Yes
+Full_Single_Fold,100,EBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_slope,91.00000,0.98120,No
+Confident_Single_Fold,100,EBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_slope,41.00000,1.00000,No
+Full_Single_Fold,100,EBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_3,48.00000,0.05043,No
+Confident_Single_Fold,100,EBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_3,19.00000,0.06369,No
+Full_All_Folds,100,EBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_slope,942245.00000,0.00597,Yes
+Confident_All_Folds,100,EBM,Baseline,ECS_BASELINE,ecs_prompt_final_layer_per_head_slope,30.00000,0.14032,No
+Full_All_Folds,100,EBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_3,815000.00000,0.00062,Yes
+Confident_All_Folds,100,EBM,Baseline,PKS_BASELINE,parameter_knowledge_difference_fft_mag_3,0.00000,0.00018,Yes
+Full_Single_Fold,100,EBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,110.00000,0.35797,No
+Confident_Single_Fold,100,EBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,58.00000,0.13332,No
+Full_Single_Fold,100,EBM,Ours 1,PFS,v_ffn_norm_per_layer_std,120.00000,0.16433,No
+Confident_Single_Fold,100,EBM,Ours 1,PFS,v_ffn_norm_per_layer_std,61.00000,0.07739,No
+Full_All_Folds,100,EBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,1140600.00000,0.00000,Yes
+Confident_All_Folds,100,EBM,Ours 1,CAS,cas_alt_vs_final_layer_per_head_std,100.00000,0.00018,Yes
+Full_All_Folds,100,EBM,Ours 1,PFS,v_ffn_norm_per_layer_std,1153700.00000,0.00000,Yes
+Confident_All_Folds,100,EBM,Ours 1,PFS,v_ffn_norm_per_layer_std,100.00000,0.00018,Yes
+Full_Single_Fold,100,EBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,116.00000,0.22933,No
+Confident_Single_Fold,100,EBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,60.00000,0.09340,No
+Full_Single_Fold,100,EBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_5,91.00000,0.98120,No
+Confident_Single_Fold,100,EBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_5,41.00000,1.00000,No
+Full_Single_Fold,100,EBM,Ours 2,PAS,pos_cos_similarity_per_layer_max,102.00000,0.58774,No
+Confident_Single_Fold,100,EBM,Ours 2,PAS,pos_cos_similarity_per_layer_max,57.00000,0.15770,No
+Full_Single_Fold,100,EBM,Ours 2,PFS,v_ffn_norm_per_layer_max,116.00000,0.22927,No
+Confident_Single_Fold,100,EBM,Ours 2,PFS,v_ffn_norm_per_layer_max,51.00000,0.37722,No
+Full_All_Folds,100,EBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,1107798.00000,0.00000,Yes
+Confident_All_Folds,100,EBM,Ours 2,BAS,bos_attention_proportion_per_head_fft_mag_1,96.00000,0.00057,Yes
+Full_All_Folds,100,EBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_5,1062987.00000,0.00000,Yes
+Confident_All_Folds,100,EBM,Ours 2,CAS,cas_alt_vs_final_layer_per_head_fft_mag_5,91.00000,0.00218,Yes
+Full_All_Folds,100,EBM,Ours 2,PAS,pos_cos_similarity_per_layer_max,1189250.00000,0.00000,Yes
+Confident_All_Folds,100,EBM,Ours 2,PAS,pos_cos_similarity_per_layer_max,100.00000,0.00017,Yes
+Full_All_Folds,100,EBM,Ours 2,PFS,v_ffn_norm_per_layer_max,1185100.00000,0.00000,Yes
+Confident_All_Folds,100,EBM,Ours 2,PFS,v_ffn_norm_per_layer_max,100.00000,0.00017,Yes
