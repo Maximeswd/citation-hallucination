@@ -2,7 +2,7 @@
 
 This repository contains the official code and data for the FACTUM framework used for citation hallucination detection. This framework consists of four mechanistic scores designed to use a model's internal states to reliably detect citation hallucinations in long-form Retrieval-Augmented Generation (RAG) models.
 
-[![arXiv](https://img.shields.io/badge/arXiv-2601.05866v1-b31b1b.svg)](https://arxiv.org/html/2601.05866v1) 
+[![arXiv](https://img.shields.io/badge/arXiv-2601.05866v1-b31b1b.svg)](https://arxiv.org/abs/2601.05866) 
 [![Data](https://img.shields.io/badge/Data-NeuCLIR-success)](https://neuclir.github.io/)
 [![GitHub](https://img.shields.io/badge/GitHub-Project-blue)](https://github.com/Maximeswd/citation-hallucination)
 
