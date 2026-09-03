@@ -1,7 +1,3 @@
-# ==============================================================================
-# --- IMPORTS & SETUP ---
-# ==============================================================================
-
 import json
 import pandas as pd
 import numpy as np
@@ -109,6 +105,7 @@ def evaluate_fold(train_df, test_df, baseline_name):
     y_test_clean = y_test[valid_test]
     scores_test_clean = scores_test[valid_test]
     
+    # --- Determine predictions and scores for metrics ---
     if "P(True)" in baseline_name:
         # P(True): High score = good (0), Low score = bad (1)
         threshold = 0.5
@@ -147,7 +144,7 @@ def main():
     parser.add_argument("--source_info_file", type=str, required=True)
     parser.add_argument("--output_file", type=str, required=True)
     parser.add_argument("--model_path", type=str, default="meta-llama/Llama-2-7b-chat-hf")
-    parser.add_argument("--n_splits", type=int, default=5, help="Number of folds for CV.")
+    parser.add_argument("--n_splits", type=int, default=5, help="Number of folds for CV. Use 3 for ~70/30, 10 for 90/10.")
     args = parser.parse_args()
 
     print("--- Loading Model, Tokenizer, and NLP ---")
