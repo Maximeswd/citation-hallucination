@@ -1,3 +1,5 @@
+# analysis_pruning.py
+
 # ==============================================================================
 # --- IMPORTS & SETUP ---
 # ==============================================================================
@@ -67,7 +69,7 @@ def config():
         "--run_ebm", action="store_true", help="If set, include the EBM model."
     )
     parser.add_argument(
-        "--seed", type=int, default=42, help="Random seed for reproducibility."
+        "--seed", type=int, default=17, help="Random seed for reproducibility."
     )
     parser.add_argument(
         "--top_n_confident",
