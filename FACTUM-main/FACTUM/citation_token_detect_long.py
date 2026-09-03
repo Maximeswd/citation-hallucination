@@ -1,7 +1,3 @@
-# ==============================================================================
-# --- IMPORTS & SETUP ---
-# ==============================================================================
-
 import sys
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -142,7 +138,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_path)
 device = model.device
 print(f"[INFO] Model loaded on primary device: {device}")
 
-# Sanity check: Print model weights to see if they are correctly loaded
+# Print model weights to see if they are correctly loaded
 print("\n--- Model Parameter Sanity Check ---")
 for n, p in model.named_parameters():
     if p.data.is_floating_point():
@@ -204,7 +200,7 @@ def get_labeled_token_map(labels, response_rag, tokenizer, prefix_len):
     return token_map
 
 
-# PKS helper function
+# PKS HELPER FUNCTION
 def calculate_pks_and_dists(pre, post):
     """Calculates PKS score (JSD) and returns probability distributions."""
     s_pre = F.softmax(pre, dim=-1, dtype=torch.float32)
@@ -228,7 +224,7 @@ def calculate_pks_and_dists(pre, post):
 all_results = []
 print(f"[INFO] Starting main loop. Expecting data_type '{data_type}'.")
 
-# Define layers (here you could also specify a subset of layers if desired)
+# Define layers
 knowledge_layers_for_pks = list(range(model.config.num_hidden_layers))
 print(f"[INFO] Scoring with {knowledge_layers_for_pks} number of layers.")
 
@@ -239,13 +235,11 @@ for item in tqdm(responses, desc="Overall Progress"):
     source_item = source_info_dict[item["source_id"]]
     full_prompt_text = source_item["prompt"]
     source_context = source_item["context"]
-    
-    # Sanity check print statements
 
-    # tqdm.write("\n" + "#" * 80)
-    # tqdm.write(f"[DEBUG] FULL PROMPT FOR SID: {item['source_id']}")
-    # tqdm.write(full_prompt_text)
-    # tqdm.write("#" * 80 + "\n")
+    tqdm.write("\n" + "#" * 80)
+    tqdm.write(f"[DEBUG] FULL PROMPT FOR SID: {item['source_id']}")
+    tqdm.write(full_prompt_text)
+    tqdm.write("#" * 80 + "\n")
 
     if not source_context:
         tqdm.write(
@@ -279,14 +273,13 @@ for item in tqdm(responses, desc="Overall Progress"):
             f"[WARNING] Instruction delimiter not found for SID {item['source_id']}. Treating all post-context as query."
         )
 
-    # More sanity check print statements
-    # tqdm.write("\n" + "-" * 80)
-    # tqdm.write("[DEBUG] PARSED PROMPT COMPONENTS")
-    # tqdm.write(f"--- [STARTING PROMPT] ---\n{prompt_before_context}")
-    # tqdm.write(f"--- [CONTEXT] ---\n{source_context[:200]}... (truncated)")
-    # tqdm.write(f"--- [QUESTION] ---\n{query_text}")
-    # tqdm.write(f"--- [INSTRUCTIONS] ---\n{instruct_text}")
-    # tqdm.write("-" * 80 + "\n")
+    tqdm.write("\n" + "-" * 80)
+    tqdm.write("[DEBUG] PARSED PROMPT COMPONENTS")
+    tqdm.write(f"--- [STARTING PROMPT] ---\n{prompt_before_context}")
+    tqdm.write(f"--- [CONTEXT] ---\n{source_context[:200]}... (truncated)")
+    tqdm.write(f"--- [QUESTION] ---\n{query_text}")
+    tqdm.write(f"--- [INSTRUCTIONS] ---\n{instruct_text}")
+    tqdm.write("-" * 80 + "\n")
 
     prompt_before_ids = tokenizer(
         prompt_before_context, add_special_tokens=False, return_tensors="pt"
@@ -379,7 +372,6 @@ for item in tqdm(responses, desc="Overall Progress"):
         )
         continue
 
-    # Pre-calculate hidden states for the entire context: efficient for long-contexts
     context_hs_all_layers = [[] for _ in range(model.config.num_hidden_layers + 1)]
     with torch.no_grad():
         for chunk_start_ctx in range(0, context_len, args.chunk_size):
@@ -476,10 +468,33 @@ for item in tqdm(responses, desc="Overall Progress"):
         pos_cos_similarities_per_layer_chunk = [[] for _ in range(chunk_len)]
         v_attn_norms_per_layer_chunk = [[] for _ in range(chunk_len)]
         v_ffn_norms_per_layer_chunk = [[] for _ in range(chunk_len)]
+        x_input_norms_per_layer_chunk = [[] for _ in range(chunk_len)]
+        x_pre_ffn_norms_per_layer_chunk = [[] for _ in range(chunk_len)]
+        x_post_ffn_norms_per_layer_chunk = [[] for _ in range(chunk_len)]
+        cos_sim_input_pre_ffn_chunk = [[] for _ in range(chunk_len)]
+        cos_sim_pre_post_ffn_chunk = [[] for _ in range(chunk_len)]
+        cos_sim_input_post_ffn_chunk = [[] for _ in range(chunk_len)]
+        cas_vs_final_layer_per_head_chunk = [[] for _ in range(chunk_len)]
+        cas_vs_current_layer_per_head_chunk = [[] for _ in range(chunk_len)]
+        attention_entropy_per_head_chunk = [[] for _ in range(chunk_len)]
+        top_p_attended_positions_per_head_chunk = [[] for _ in range(chunk_len)]
         bos_attention_proportion_per_head_chunk = [[] for _ in range(chunk_len)]
+        ecs_final_per_head_chunk = [
+            [] for _ in range(chunk_len)
+        ]  # this is ecs but adjusted for context tokens only
+        ecs_specific_per_head_chunk = [[] for _ in range(chunk_len)]
         context_direction_vectors_per_layer_chunk = [[] for _ in range(chunk_len)]
-        ecs_prompt_final_per_head_chunk = [[] for _ in range(chunk_len)] 
+        semantic_drift_per_layer_chunk = [[] for _ in range(chunk_len)]
+        ecs_prompt_final_per_head_chunk = [[] for _ in range(chunk_len)]
+        ecs_prompt_specific_per_head_chunk = [[] for _ in range(chunk_len)]
+        top_p_attended_context_positions_per_head_chunk = [[] for _ in range(chunk_len)]
         cas_alt_vs_final_layer_per_head_chunk = [[] for _ in range(chunk_len)]
+        cas_alt_vs_current_layer_per_head_chunk = [[] for _ in range(chunk_len)]
+
+        ortho_rank_per_layer_chunk = [[] for _ in range(chunk_len)]
+        token_stability_per_layer_chunk = [[] for _ in range(chunk_len)]
+        context_vs_sink_ratio_per_head_chunk = [[] for _ in range(chunk_len)]
+
         h_final_response = model_outputs_gpu.hidden_states[-1][0]
 
         for layer_idx in range(num_layers):
@@ -506,16 +521,62 @@ for item in tqdm(responses, desc="Overall Progress"):
                 v_ffn_norms_per_layer_chunk[i].append(
                     torch.linalg.norm(v_ffn_b[i]).item()
                 )
+                x_input_norms_per_layer_chunk[i].append(
+                    torch.linalg.norm(x_input_b[i]).item()
+                )
+                x_pre_ffn_norms_per_layer_chunk[i].append(
+                    torch.linalg.norm(x_pre_ffn_b[i]).item()
+                )
+                x_post_ffn_norms_per_layer_chunk[i].append(
+                    torch.linalg.norm(x_post_ffn_b[i]).item()
+                )
+                cos_sim_input_pre_ffn_chunk[i].append(
+                    F.cosine_similarity(x_input_b[i], x_pre_ffn_b[i], dim=0).item()
+                )
+                cos_sim_pre_post_ffn_chunk[i].append(
+                    F.cosine_similarity(x_pre_ffn_b[i], x_post_ffn_b[i], dim=0).item()
+                )
+                cos_sim_input_post_ffn_chunk[i].append(
+                    F.cosine_similarity(x_input_b[i], x_post_ffn_b[i], dim=0).item()
+                )
 
             # CAS & ECS SCORE
             # ecs_prompt_final: this is the baseline ECS score
-            # cas_alt_vs_final: that's ecs adjusted for context tokens only and are either attention weighted 
+            # ecs_final: that's ecs adjusted for context tokens only instead of full prompt
+            # ecs_current: is using the current layer hidden states instead of final layer
+            # cas versions are either attention weighted versions
             attn_layer = model_outputs_gpu.attentions[layer_idx][0].to(layer_device)
             bos_attentions_for_chunk = attn_layer[:, :, 0]
             for i in range(chunk_len):
                 bos_attention_proportion_per_head_chunk[i].extend(
                     bos_attentions_for_chunk[:, i].tolist()
                 )
+
+            # Semantic Drift: extra metric
+            if context_len > 0 and context_hs_per_layer is not None:
+                hs_context_layer = context_hs_per_layer[layer_idx][0].to(layer_device)
+                # Average attention across heads for a layer-level view
+                avg_head_attn = attn_layer.mean(dim=0)
+                for i in range(chunk_len):
+                    # Get attention from current token `i` to all context tokens
+                    attn_to_context_token_i = avg_head_attn[
+                        i, context_start_idx:context_end_idx
+                    ]
+                    # Renormalize the context attention weights
+                    renormalized_weights = attn_to_context_token_i / (
+                        attn_to_context_token_i.sum() + 1e-9
+                    )
+                    # Compute the weighted average of context hidden states (the CDV)
+                    cdv = torch.matmul(
+                        renormalized_weights.unsqueeze(0), hs_context_layer
+                    ).squeeze(0)
+                    context_direction_vectors_per_layer_chunk[i].append(cdv)
+            else:  # Handle case with no context
+                hidden_size = model.config.hidden_size
+                for i in range(chunk_len):
+                    context_direction_vectors_per_layer_chunk[i].append(
+                        torch.zeros(hidden_size, device=layer_device)
+                    )
 
             h_final_for_layer = h_final_response.to(layer_device)
             h_current_layer_output = model_outputs_gpu.hidden_states[layer_idx + 1][0]
@@ -532,7 +593,15 @@ for item in tqdm(responses, desc="Overall Progress"):
                     clean_attentions = attn_to_context / (
                         attn_to_context.sum(dim=-1, keepdim=True) + 1e-9
                     )
-                    
+                    # Standard CAS: Use current layer's HS for CDV
+                    cdv_per_head = torch.matmul(clean_attentions, hs_context_layer)
+                    cas_vs_final = F.cosine_similarity(
+                        cdv_per_head, h_final_for_layer.unsqueeze(0), dim=-1
+                    )
+                    cas_vs_current = F.cosine_similarity(
+                        cdv_per_head, h_current_for_layer.unsqueeze(0), dim=-1
+                    )
+
                     # Alternative CAS: Use final layer's HS for CDV
                     cdv_alt_per_head = torch.matmul(
                         clean_attentions, hs_context_final_layer_for_cas
@@ -540,20 +609,87 @@ for item in tqdm(responses, desc="Overall Progress"):
                     cas_alt_vs_final = F.cosine_similarity(
                         cdv_alt_per_head, h_final_for_layer.unsqueeze(0), dim=-1
                     )
+                    cas_alt_vs_current = F.cosine_similarity(
+                        cdv_alt_per_head, h_current_for_layer.unsqueeze(0), dim=-1
+                    )
+
                 else:  # Handle mismatch
+                    cas_vs_final = cas_vs_current = torch.zeros(
+                        (attn_layer.shape[1], chunk_len), device=layer_device
+                    )
                     cas_alt_vs_final = cas_alt_vs_current = torch.zeros(
                         (attn_layer.shape[1], chunk_len), device=layer_device
                     )
 
             else:  # Handle empty context slice
+                cas_vs_final = cas_vs_current = torch.zeros(
+                    (attn_layer.shape[1], chunk_len), device=layer_device
+                )
                 cas_alt_vs_final = cas_alt_vs_current = torch.zeros(
                     (attn_layer.shape[1], chunk_len), device=layer_device
                 )
 
             for i in range(chunk_len):
+                cas_vs_final_layer_per_head_chunk[i].extend(cas_vs_final[:, i].tolist())
+                cas_vs_current_layer_per_head_chunk[i].extend(
+                    cas_vs_current[:, i].tolist()
+                )
                 cas_alt_vs_final_layer_per_head_chunk[i].extend(
                     cas_alt_vs_final[:, i].tolist()
                 )
+                cas_alt_vs_current_layer_per_head_chunk[i].extend(
+                    cas_alt_vs_current[:, i].tolist()
+                )
+
+            # ECS CALCULATION (Context-Only)
+            k_attn_ecs = max(1, math.ceil(context_len * 0.10))
+            if attn_to_context.shape[-1] > 0:
+                topk_indices = torch.topk(attn_to_context, k_attn_ecs, dim=-1).indices
+                hs_context_final_layer = context_hs_per_layer[-1][0].to(layer_device)
+                hs_context_specific_layer = context_hs_per_layer[layer_idx + 1][0].to(
+                    layer_device
+                )
+                num_heads, hidden_size = (
+                    model.config.num_attention_heads,
+                    model.config.hidden_size,
+                )
+
+                for i in range(chunk_len):
+                    topk_indices_token = topk_indices[:, i, :]
+                    expanded_indices = topk_indices_token.unsqueeze(-1).expand(
+                        -1, -1, hidden_size
+                    )
+
+                    # ECS vs Final
+                    attended_hs_final = (
+                        hs_context_final_layer.unsqueeze(0)
+                        .expand(num_heads, -1, -1)
+                        .gather(1, expanded_indices)
+                    )
+                    ecs_final_token = F.cosine_similarity(
+                        attended_hs_final.mean(dim=1),
+                        h_final_for_layer[i].unsqueeze(0),
+                        dim=1,
+                    )
+                    ecs_final_per_head_chunk[i].extend(ecs_final_token.tolist())
+
+                    # ECS vs Specific
+                    attended_hs_specific = (
+                        hs_context_specific_layer.unsqueeze(0)
+                        .expand(num_heads, -1, -1)
+                        .gather(1, expanded_indices)
+                    )
+                    ecs_specific_token = F.cosine_similarity(
+                        attended_hs_specific.mean(dim=1),
+                        h_current_for_layer[i].unsqueeze(0),
+                        dim=1,
+                    )
+                    ecs_specific_per_head_chunk[i].extend(ecs_specific_token.tolist())
+            else:  # If no context attention, append zeros
+                zeros = [0.0] * model.config.num_attention_heads
+                for i in range(chunk_len):
+                    ecs_final_per_head_chunk[i].extend(zeros)
+                    ecs_specific_per_head_chunk[i].extend(zeros)
 
             # ECS_prompt CALCULATION (all prompt tokens) == baseline from ReDeEP
             k_attn_ecs_prompt = max(1, math.ceil(prefix_len * 0.10))
@@ -606,15 +742,116 @@ for item in tqdm(responses, desc="Overall Progress"):
                         h_current_for_layer[i].unsqueeze(0),
                         dim=1,
                     )
+                    ecs_prompt_specific_per_head_chunk[i].extend(
+                        ecs_prompt_specific_token.tolist()
+                    )
 
                 del hs_prompt_final_layer, hs_prompt_specific_layer
             else:
                 zeros = [0.0] * model.config.num_attention_heads
                 for i in range(chunk_len):
                     ecs_prompt_final_per_head_chunk[i].extend(zeros)
+                    ecs_prompt_specific_per_head_chunk[i].extend(zeros)
 
+            if args.attention_entropy:
+                # Loop through each token in the chunk individually
+                for i in range(chunk_len):
+                    # Entropy Calculation (uses full history)
+                    current_history_len = prefix_len + chunk_start + i
+                    attn_to_history_for_token_i = attn_layer[:, i, :current_history_len]
+                    if current_history_len > 0:
+                        clamped_probs = torch.clamp(
+                            attn_to_history_for_token_i, min=0.0
+                        )  # just in case: although not really needed because softmax already normalized scores
+                        probs = clamped_probs / (
+                            clamped_probs.sum(dim=-1, keepdim=True) + 1e-9
+                        )
+                        entropy = -torch.sum(probs * torch.log2(probs + 1e-9), dim=-1)
+                    else:
+                        entropy = torch.zeros(
+                            attn_layer.shape[0], device=attn_layer.device
+                        )
+                    attention_entropy_per_head_chunk[i].extend(entropy.tolist())
+                    if "entropy" in locals():
+                        del entropy
 
-            del attn_layer, h_final_for_layer, cas_alt_vs_final
+                    # Top-P Prompt-Only Attention (for prompt-wide ECS)
+                    # This now populates `top_p_attended_positions_per_head_chunk` and only looks at attention to the prefix/prompt, excluding response tokens.
+                    attn_to_prompt_for_token_i = attn_layer[:, i, :prefix_len]
+                    if prefix_len > 0:
+                        k_prompt = math.ceil(args.top_p_attention * prefix_len)
+                        k_prompt = max(1, min(k_prompt, prefix_len))
+                        topk_w_prompt, topk_i_prompt = torch.topk(
+                            attn_to_prompt_for_token_i, k=k_prompt, dim=-1
+                        )
+
+                        layer_top_p_data = []
+                        for head_idx in range(topk_i_prompt.shape[0]):
+                            head_indices = topk_i_prompt[head_idx, :].tolist()
+                            head_weights = topk_w_prompt[head_idx, :].tolist()
+                            types = []
+                            for idx in head_indices:
+                                if idx == 0:
+                                    types.append("bos")
+                                elif prompt_start_idx <= idx < prompt_end_idx:
+                                    types.append("prompt")
+                                elif context_start_idx <= idx < context_end_idx:
+                                    types.append("context")
+                                elif query_start_idx <= idx < query_end_idx:
+                                    types.append("query")
+                                elif instruct_start_idx <= idx < instruct_end_idx:
+                                    types.append("instruct")
+                                else:
+                                    types.append("unknown")
+                            layer_top_p_data.append(
+                                {
+                                    "indices": head_indices,
+                                    "weights": head_weights,
+                                    "types": types,
+                                }
+                            )
+                        top_p_attended_positions_per_head_chunk[i].extend(
+                            layer_top_p_data
+                        )
+
+                        if "topk_w_prompt" in locals():
+                            del topk_w_prompt, topk_i_prompt
+
+                    # Top-P Context-Only Attention (for context-only ECS/CAS)
+                    attn_to_context_for_token_i = attn_layer[
+                        :, i, context_start_idx:context_end_idx
+                    ]
+                    if context_len > 0 and attn_to_context_for_token_i.shape[-1] > 0:
+                        k_context = math.ceil(args.top_p_attention * context_len)
+                        k_context = max(1, min(k_context, context_len))
+
+                        topk_w_ctx, topk_i_ctx_relative = torch.topk(
+                            attn_to_context_for_token_i, k=k_context, dim=-1
+                        )
+
+                        layer_top_p_context_data = []
+                        for head_idx in range(topk_i_ctx_relative.shape[0]):
+                            absolute_indices = (
+                                topk_i_ctx_relative[head_idx, :] + context_start_idx
+                            ).tolist()
+                            head_weights = topk_w_ctx[head_idx, :].tolist()
+                            types = ["context"] * len(absolute_indices)
+
+                            layer_top_p_context_data.append(
+                                {
+                                    "indices": absolute_indices,
+                                    "weights": head_weights,
+                                    "types": types,
+                                }
+                            )
+                        top_p_attended_context_positions_per_head_chunk[i].extend(
+                            layer_top_p_context_data
+                        )
+
+                        if "topk_w_ctx" in locals():
+                            del topk_w_ctx, topk_i_ctx_relative
+
+            del attn_layer, h_final_for_layer, cas_vs_final, cas_alt_vs_final
 
             h_current_layer_for_new_metrics = model_outputs_gpu.hidden_states[
                 layer_idx + 1
@@ -622,6 +859,80 @@ for item in tqdm(responses, desc="Overall Progress"):
             attn_layer_for_new_metrics = model_outputs_gpu.attentions[layer_idx][0].to(
                 layer_device
             )
+
+            # First, we need CAS vs Current for the Tug-of-War ratio
+            attn_to_context_for_cas = attn_layer_for_new_metrics[
+                :, :, context_start_idx:context_end_idx
+            ]
+            if (
+                context_len > 0
+                and context_hs_per_layer is not None
+                and attn_to_context_for_cas.shape[-1] > 0
+            ):
+                hs_context_layer = context_hs_per_layer[layer_idx][0].to(layer_device)
+                clean_attentions = attn_to_context_for_cas / (
+                    attn_to_context_for_cas.sum(dim=-1, keepdim=True) + 1e-9
+                )
+                cdv_per_head = torch.matmul(clean_attentions, hs_context_layer)
+                cas_current = F.cosine_similarity(
+                    cdv_per_head, h_current_layer_for_new_metrics.unsqueeze(0), dim=-1
+                )
+            else:
+                cas_current = torch.zeros(
+                    model.config.num_attention_heads, chunk_len, device=layer_device
+                )
+
+            # Now, calculate the new scores for each token in the chunk
+            if prompt_hs_per_layer is not None:
+                h_bos_current_layer = prompt_hs_per_layer[layer_idx + 1][0, 0, :].to(
+                    layer_device
+                )
+                for i in range(chunk_len):
+                    h_token_current_layer = h_current_layer_for_new_metrics[i]
+                    cos_sim_with_bos = F.cosine_similarity(
+                        h_token_current_layer, h_bos_current_layer, dim=0
+                    ).item()
+
+                    # OrthoRank Score (per-layer)
+                    ortho_rank_per_layer_chunk[i].append(1.0 - abs(cos_sim_with_bos))
+
+                    # Token Stability (per-layer)
+                    if layer_idx > 0:
+                        h_token_prev_layer = model_outputs_gpu.hidden_states[layer_idx][
+                            0, i, :
+                        ].to(layer_device)
+                        token_stability_per_layer_chunk[i].append(
+                            F.cosine_similarity(
+                                h_token_current_layer, h_token_prev_layer, dim=0
+                            ).item()
+                        )
+                    else:
+                        token_stability_per_layer_chunk[i].append(1.0)
+
+                    # Tug-of-War Ratio (per-head)
+                    cas_scores_for_token = cas_current[:, i].tolist()
+                    tug_ratios = [
+                        cas / (abs(cos_sim_with_bos) + 1e-9)
+                        for cas in cas_scores_for_token
+                    ]
+                    context_vs_sink_ratio_per_head_chunk[i].extend(tug_ratios)
+            else:
+                zeros_h = [0.0] * model.config.num_attention_heads
+                for i in range(chunk_len):
+                    ortho_rank_per_layer_chunk[i].append(0.0)
+                    token_stability_per_layer_chunk[i].append(1.0)
+                    context_vs_sink_ratio_per_head_chunk[i].extend(zeros_h)
+
+        # Semantic Drift: Calculate drift between consecutive layer CDVs
+        for i in range(chunk_len):
+            # The first layer has no prior layer to compare to, so drift is 0
+            semantic_drift_per_layer_chunk[i].append(0.0)
+            for layer_idx in range(1, num_layers):
+                cdv_curr = context_direction_vectors_per_layer_chunk[i][layer_idx]
+                cdv_prev = context_direction_vectors_per_layer_chunk[i][layer_idx - 1]
+                # Calculate Euclidean (L2) norm of the difference
+                drift = torch.linalg.norm(cdv_curr - cdv_prev).item()
+                semantic_drift_per_layer_chunk[i].append(drift)
 
         # PKS caclulation
         pks_scores_chunk = [[] for _ in range(chunk_len)]
@@ -718,15 +1029,46 @@ for item in tqdm(responses, desc="Overall Progress"):
                 "pos_cos_similarity_per_layer": pos_cos_similarities_per_layer_chunk[i],
                 "v_attn_norm_per_layer": v_attn_norms_per_layer_chunk[i],
                 "v_ffn_norm_per_layer": v_ffn_norms_per_layer_chunk[i],
+                "x_input_norm_per_layer": x_input_norms_per_layer_chunk[i],
+                "x_pre_ffn_norm_per_layer": x_pre_ffn_norms_per_layer_chunk[i],
+                "x_post_ffn_norm_per_layer": x_post_ffn_norms_per_layer_chunk[i],
+                "cos_sim_input_pre_ffn_per_layer": cos_sim_input_pre_ffn_chunk[i],
+                "cos_sim_pre_post_ffn_per_layer": cos_sim_pre_post_ffn_chunk[i],
+                "cos_sim_input_post_ffn_per_layer": cos_sim_input_post_ffn_chunk[i],
+                "ecs_final_layer_per_head": ecs_final_per_head_chunk[i],
+                "ecs_specific_layer_per_head": ecs_specific_per_head_chunk[i],
+                "cas_vs_final_layer_per_head": cas_vs_final_layer_per_head_chunk[i],
+                "cas_vs_current_layer_per_head": cas_vs_current_layer_per_head_chunk[i],
                 "cas_alt_vs_final_layer_per_head": cas_alt_vs_final_layer_per_head_chunk[
                     i
                 ],
+                "cas_alt_vs_current_layer_per_head": cas_alt_vs_current_layer_per_head_chunk[
+                    i
+                ],
+                "attention_entropy_per_head": attention_entropy_per_head_chunk[i],
                 "bos_attention_proportion_per_head": bos_attention_proportion_per_head_chunk[
                     i
                 ],
+                "top_p_attended_positions_per_head": top_p_attended_positions_per_head_chunk[
+                    i
+                ],
+                "top_p_attended_context_positions_per_head": top_p_attended_context_positions_per_head_chunk[
+                    i
+                ],
+                "semantic_drift_per_layer": semantic_drift_per_layer_chunk[i],
                 # ReDeEP scores
                 "ecs_prompt_final_layer_per_head": ecs_prompt_final_per_head_chunk[i],
+                "ecs_prompt_specific_layer_per_head": ecs_prompt_specific_per_head_chunk[
+                    i
+                ],
                 "parameter_knowledge_difference": pks_scores_chunk[i],
+                # "pks_top_distributions": pks_dists_chunk[i],
+                # Extra scores not included in paper but still good features
+                "ortho_rank_per_layer": ortho_rank_per_layer_chunk[i],
+                "token_stability_per_layer": token_stability_per_layer_chunk[i],
+                "context_vs_sink_ratio_per_layer": context_vs_sink_ratio_per_head_chunk[
+                    i
+                ],
             }
             item_results["token_data"].append(final_token_data)
 
